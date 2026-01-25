@@ -7,6 +7,9 @@
 
   },
   "build": {
+    "base": {
+      "node": "v22.21.1"//ここを追加
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
