@@ -16,7 +16,6 @@ const widgetConfig: WithAndroidWidgetsParams = {
       targetCellWidth: 5,
       targetCellHeight: 2,
       description: "This is my first widget", // ウィジェットピッカーに表示される説明
-      previewImage: "./assets/widget-preview/hello.png", // 【任意】ウィジェットプレビュー画像へのパス
 
       // このAppWidgetが更新される頻度（ミリ秒単位）。
       // タスクハンドラはwidgetAction = 'UPDATE_WIDGET'で呼び出されます。
