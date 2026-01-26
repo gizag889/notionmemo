@@ -1,14 +1,23 @@
-// `@expo/metro-runtime` MUST be the first import to ensure Fast Refresh works
-// on web.
-import '@expo/metro-runtime';
-
-import { App } from 'expo-router/build/qualified-entry';
-import { renderRootComponent } from 'expo-router/build/renderRootComponent';
-
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
-import { widgetTaskHandler } from '@/components/widget-task-handler';
 
-// This file should only import and register the root. No components or exports
-// should be added here.
-renderRootComponent(App);
-registerWidgetTaskHandler(widgetTaskHandler);
+registerWidgetTaskHandler(async (props) => {
+    const {clickAction} = props;
+switch(props.widgetAction){
+    case 'WIDGET_CLICK':
+    if (clickAction === 'OPEN_MAIN') {
+      // Do stuff when primitive with `clickAction="MY_ACTION"` is clicked
+      // props.clickActionData === { id: 0 }
+    }
+     if (clickAction === 'OPEN_INPUT') {
+      // Do stuff when primitive with `clickAction="MY_ACTION"` is clicked
+      // props.clickActionData === { id: 0 }
+    }
+    break;
+     default:
+      break;
+}
+ 
+  
+
+
+});

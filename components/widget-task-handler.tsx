@@ -1,10 +1,10 @@
 import React from 'react';
 import type { WidgetTaskHandlerProps } from 'react-native-android-widget';
-import { HelloWidget } from './HelloWidget';
+import { WidgetView } from './WidgetView';
 
 // ①ウィジェットの名前 と コンポーネント の紐づけ
 const nameToWidget = {
-  Hello: HelloWidget,
+  Hello: WidgetView,
 };
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
@@ -15,7 +15,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 	// ②イベント処理
   switch (props.widgetAction) {
     case 'WIDGET_ADDED':
-      props.renderWidget(<Widget />);
+      props.renderWidget(<WidgetView />);
       break;
 
     case 'WIDGET_UPDATE':
