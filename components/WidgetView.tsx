@@ -1,3 +1,4 @@
+"use no memo";
 import { FlexWidget, TextWidget } from 'react-native-android-widget';
 
 export function WidgetView({ content = "読み込み中..." }) {

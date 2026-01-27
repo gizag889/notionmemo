@@ -1,3 +1,4 @@
+"use no memo";
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';

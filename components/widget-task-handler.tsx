@@ -1,3 +1,4 @@
+"use no memo";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WidgetView } from '../components/WidgetView';
