@@ -1,7 +1,7 @@
 "use no memo";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useCallback } from "react";
+import React from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 export default function HomeScreen() {
+  //ページ遷移用のrouter
   const router = useRouter();
 
   // Notionからデータを取得する関数
@@ -36,7 +37,9 @@ export default function HomeScreen() {
 
     // 例として、最初の3つのテキストブロックを結合して表示
     const textBlocks = data.results
+      //notion APIの階層からparagraphを取り出す
       .filter((block: any) => block.type === "paragraph")
+      //paragraph以下に文字列からあるか調べてあったらplain_textを抜き出す
       .map((block: any) => block.paragraph.rich_text[0]?.plain_text || "")
       .join("\n");
 
@@ -44,6 +47,7 @@ export default function HomeScreen() {
   };
 
   const {
+    //楽観的観測 pending
     data: content,
     isLoading,
     isError,
@@ -52,11 +56,9 @@ export default function HomeScreen() {
   } = useQuery({
     queryKey: ["notionData"],
     queryFn: fetchNotionData,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
-
-  const onRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -78,7 +80,12 @@ export default function HomeScreen() {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />
+        //Pull to Refresh モバイルのプラクティス
+        <RefreshControl 
+           // 今くるくる回すべきか
+        refreshing={isRefetching} 
+                    //画面引っ張ったらアクション
+        onRefresh={refetch} />
       }
     >
       <View style={styles.header}>
