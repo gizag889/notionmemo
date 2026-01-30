@@ -14,7 +14,7 @@ export default function QuickInputScreen() {
   if (!text) return;
 
   try {
-    const response = await fetch(`https://api.notion.com/v1/blocks/${process.env.EXPO_PUBLIC_DATABASE_ID}/children`, {
+    const response = await fetch(`https://api.notion.com/v1/blocks/${process.env.EXPO_PUBLIC_BLOCK_ID}/children`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${process.env.EXPO_PUBLIC_NOTION_TOKEN}`,
