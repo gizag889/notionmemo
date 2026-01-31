@@ -9,7 +9,10 @@ import { WidgetView } from '../components/WidgetView';
 export default function QuickInputScreen() {
   const [text, setText] = useState('');
   const router = useRouter();
-
+/**
+ * 
+ * @returns 
+ */
  const handleSend = async () => {
   if (!text) return;
 
@@ -47,7 +50,8 @@ export default function QuickInputScreen() {
       });
 
       alert('Notionに追加し、ウィジェットを更新しました！');
-      router.dismiss(); // モーダルを閉じてメイン画面に戻る
+      // 入力画面を閉じてメイン画面に戻る
+      router.dismiss(); 
     } else {
       const error = await response.json();
       console.error('Notion Error:', error);
