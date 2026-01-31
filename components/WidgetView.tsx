@@ -26,18 +26,23 @@ export function WidgetView({ content = "読み込み中..." }) {
       {/* 追加ボタンエリア: タップで入力モーダルへ */}
 
       <FlexWidget
-        clickAction="OPEN_INPUT"
         style={{
-          //もしビルドエラーになる場合は // @ts-ignore で抑制する
-          position: "absolute",
-          right: 16,
-          bottom: 16,
-          backgroundColor: "#202020",
-          borderRadius: 24,
+          width: "match_parent",
+          flexDirection: "row",
+          justifyContent: "flex-end",
           padding: 12,
         }}
       >
-        <TextWidget text="✏️" style={{ fontSize: 18, color: "#E6E6E6" }} />
+        <FlexWidget
+          clickAction="OPEN_INPUT"
+          style={{
+            backgroundColor: "#202020",
+            borderRadius: 24,
+            padding: 12,
+          }}
+        >
+          <TextWidget text="✏️" style={{ fontSize: 18, color: "#E6E6E6" }} />
+        </FlexWidget>
       </FlexWidget>
     </FlexWidget>
   );
