@@ -1,5 +1,4 @@
 "use no memo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
@@ -12,9 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { requestWidgetUpdate } from "react-native-android-widget";
-import { WidgetView } from "../components/WidgetView";
 import { fetchNotionData } from "../lib/notion";
+import { updateWidgetContent } from "../lib/widget";
 
 export default function HomeScreen() {
   //ページ遷移用のrouter
@@ -36,14 +34,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (content) {
-      const updateWidget = async () => {
-        await AsyncStorage.setItem("latest_notion_text", content);
-        requestWidgetUpdate({
-          widgetName: "NotionClipboardWidget",
-          renderWidget: () => <WidgetView content={content} />,
-        });
-      };
-      updateWidget();
+      updateWidgetContent(content);
     }
   }, [content]);
 
