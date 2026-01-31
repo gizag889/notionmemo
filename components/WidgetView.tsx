@@ -1,5 +1,5 @@
 "use no memo";
-import { PencilLine } from "lucide-react-native";
+
 import { FlexWidget, TextWidget } from "react-native-android-widget";
 
 export function WidgetView({ content = "読み込み中..." }) {
@@ -28,13 +28,16 @@ export function WidgetView({ content = "読み込み中..." }) {
       <FlexWidget
         clickAction="OPEN_INPUT"
         style={{
-          padding: 10,
-          justifyContent: "flex-end",
-          alignItems: "flex-end",
+          //もしビルドエラーになる場合は // @ts-ignore で抑制する
+          position: "absolute",
+          right: 16,
+          bottom: 16,
           backgroundColor: "#202020",
+          borderRadius: 24,
+          padding: 12,
         }}
       >
-        <PencilLine size={24} color="#E6E6E6" />
+        <TextWidget text="✏️" style={{ fontSize: 18, color: "#E6E6E6" }} />
       </FlexWidget>
     </FlexWidget>
   );
