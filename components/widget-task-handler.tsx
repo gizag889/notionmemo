@@ -28,11 +28,12 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         // props.clickActionData === { id: 0 }
         Linking.openURL("notionmemo://");
       }
-    // if (clickAction === "OPEN_INPUT") {
-    //   // Do stuff when primitive with `clickAction="MY_ACTION"` is clicked
-    //   // props.clickActionData === { id: 0 }
-    // }
-    // break;
+    if (clickAction === "OPEN_INPUT") {
+      // Do stuff when primitive with `clickAction="MY_ACTION"` is clicked
+      // props.clickActionData === { id: 0 
+      Linking.openURL("notionmemo://quick-input");
+    }
+    break;
     default:
       break;
   }
