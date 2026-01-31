@@ -1,7 +1,8 @@
 "use no memo";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -11,40 +12,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { requestWidgetUpdate } from "react-native-android-widget";
+import { WidgetView } from "../components/WidgetView";
+import { fetchNotionData } from "../lib/notion";
 
 export default function HomeScreen() {
   //ページ遷移用のrouter
   const router = useRouter();
-
-  // Notionからデータを取得する関数
-  const fetchNotionData = async () => {
-    // 指定したページの「子ブロック」を取得
-    const response = await fetch(
-      `https://api.notion.com/v1/blocks/${process.env.EXPO_PUBLIC_BLOCK_ID}/children`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.EXPO_PUBLIC_NOTION_TOKEN}`,
-          "Notion-Version": "2022-06-28",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-
-    const data = await response.json();
-
-    // 例として、最初の3つのテキストブロックを結合して表示
-    const textBlocks = data.results
-      //notion APIの階層からparagraphを取り出す
-      .filter((block: any) => block.type === "paragraph")
-      //paragraph以下に文字列からあるか調べてあったらplain_textを抜き出す
-      .map((block: any) => block.paragraph.rich_text[0]?.plain_text || "")
-      .join("\n");
-
-    return textBlocks || "内容が空か、読み取れるテキストがありません。";
-  };
 
   const {
     //楽観的観測 pending
@@ -59,6 +33,19 @@ export default function HomeScreen() {
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (content) {
+      const updateWidget = async () => {
+        await AsyncStorage.setItem("latest_notion_text", content);
+        requestWidgetUpdate({
+          widgetName: "NotionClipboardWidget",
+          renderWidget: () => <WidgetView content={content} />,
+        });
+      };
+      updateWidget();
+    }
+  }, [content]);
 
   if (isLoading) {
     return (
@@ -81,11 +68,12 @@ export default function HomeScreen() {
       style={styles.container}
       refreshControl={
         //Pull to Refresh モバイルのプラクティス
-        <RefreshControl 
-           // 今くるくる回すべきか
-        refreshing={isRefetching} 
-                    //画面引っ張ったらアクション
-        onRefresh={refetch} />
+        <RefreshControl
+          // 今くるくる回すべきか
+          refreshing={isRefetching}
+          //画面引っ張ったらアクション
+          onRefresh={refetch}
+        />
       }
     >
       <View style={styles.header}>
