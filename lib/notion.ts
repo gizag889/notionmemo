@@ -16,13 +16,14 @@ export const fetchNotionData = async () => {
 
   const data = await response.json();
 
-  // 例として、最初の3つのテキストブロックを結合して表示
   const textBlocks = data.results
     //notion APIの階層からparagraphを取り出す
     .filter((block: any) => block.type === "paragraph")
     //paragraph以下に文字列からあるか調べてあったらplain_textを抜き出す
-    .map((block: any) => block.paragraph.rich_text[0]?.plain_text || "")
-    .join("\n");
+    .map((block: any) => block.paragraph.rich_text[0]?.plain_text || "");
+  // .join("\n");
 
-  return textBlocks || "内容が空か、読み取れるテキストがありません。";
+  return textBlocks.length > 0
+    ? textBlocks
+    : ["内容が空か、読み取れるテキストがありません。"];
 };

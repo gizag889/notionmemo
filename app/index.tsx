@@ -72,7 +72,9 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.contentText}>{content}</Text>
+        <Text style={styles.contentText}>
+          {Array.isArray(content) ? content.join("\n") : content}
+        </Text>
       </View>
 
       <TouchableOpacity
