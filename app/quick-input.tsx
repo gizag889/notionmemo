@@ -1,8 +1,8 @@
 "use no memo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Button, StyleSheet, TextInput, View } from "react-native";
+import { fetchNotionData } from "../lib/notion";
 import { updateWidgetContent } from "../lib/widget";
 
 export default function QuickInputScreen() {
@@ -40,10 +40,8 @@ export default function QuickInputScreen() {
       );
 
       if (response.ok) {
-        // 1. AsyncStorageに最新のテキストを保存
-        const existingText =
-          (await AsyncStorage.getItem("latest_notion_text")) || "";
-        const newFullText = existingText ? existingText + "\n" + text : text;
+        // 1. Notionから最新の全データを再取得
+        const newFullText = await fetchNotionData();
         await updateWidgetContent(newFullText);
 
         alert("Notionに追加し、ウィジェットを更新しました！");
