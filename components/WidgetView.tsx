@@ -47,6 +47,7 @@ export function WidgetView({ items = ["読み込み中..."] }: { items?: string[
             />
           ))}
         </ListWidget>
+         </OverlapWidget>
 
       {/* <FlexWidget
         style={{
