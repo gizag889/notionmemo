@@ -19,9 +19,11 @@ export const fetchNotionData = async () => {
   const textBlocks = data.results
     //notion APIの階層からparagraphを取り出す
     .filter((block: any) => block.type === "paragraph")
-    //paragraph以下に文字列からあるか調べてあったらplain_textを抜き出す
-    .map((block: any) => block.paragraph.rich_text[0]?.plain_text || "");
-  // .join("\n");
+    .map(
+      (block: any) =>
+        block.paragraph.rich_text.map((t: any) => t.plain_text).join("") || "",
+    );
+  console.log(textBlocks);
 
   return textBlocks.length > 0
     ? textBlocks
