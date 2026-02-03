@@ -68,12 +68,18 @@ export default function HomeScreen() {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>📌 Notion最新メモ</Text>
+        <Text style={styles.headerTitle}>
+          {content?.title || "📌 Notion最新メモ"}
+        </Text>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.contentText}>
-          {Array.isArray(content) ? content.join("\n") : content}
+          {content?.content
+            ? Array.isArray(content.content)
+              ? content.content.join("\n")
+              : content.content
+            : ""}
         </Text>
       </View>
 

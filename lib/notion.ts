@@ -1,32 +1,63 @@
-export const fetchNotionData = async (): Promise<string[]> => {
-  // 指定したページの「子ブロック」を取得
-  const response = await fetch(
-    `https://api.notion.com/v1/blocks/${process.env.EXPO_PUBLIC_BLOCK_ID}/children`,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.EXPO_PUBLIC_NOTION_TOKEN}`,
-        "Notion-Version": "2022-06-28",
-      },
-    },
+export const fetchNotionData = async (): Promise<{
+  title: string;
+  content: string[];
+}> => {
+  const pageId = process.env.EXPO_PUBLIC_BLOCK_ID;
+  const headers = {
+    Authorization: `Bearer ${process.env.EXPO_PUBLIC_NOTION_TOKEN}`,
+    "Notion-Version": "2022-06-28",
+  };
+
+  // ページ情報を取得（タイトル用）
+  const pageResponse = await fetch(
+    `https://api.notion.com/v1/pages/${pageId}`,
+    { headers },
   );
 
-  if (!response.ok) {
+  // ブロックを取得（本文用）
+  const blocksResponse = await fetch(
+    `https://api.notion.com/v1/blocks/${pageId}/children`,
+    { headers },
+  );
+
+  if (!pageResponse.ok || !blocksResponse.ok) {
     throw new Error("Network response was not ok");
   }
 
-  const data = await response.json();
+  const pageData = await pageResponse.json();
+  const blocksData = await blocksResponse.json();
 
-  const textBlocks = data.results
-    //notion APIの階層からparagraphを取り出す
-    .filter((block: any) => block.type === "paragraph")
-    .map(
-      (block: any) =>
-        //空白行だとfalsyとなり、空文字列に変換する
-        block.paragraph.rich_text.map((t: any) => t.plain_text).join("") || " ",
-    );
-  console.log(textBlocks);
+  // タイトルの取得 (ページの種類によってプロパティ構造が異なる場合があるが、一般的なデータベースページやページを想定)
+  let title = "Notion Memo";
+  if (pageData.properties) {
+    // データベース内のページの場合、プロパティ名は "Name" or "title" などユーザー設定による
+    // ここでは汎用的に "title" タイプのプロパティを探すか、あるいは特定のキー（例: "title"）を想定する
+    // 通常のスタンドアロンページの場合、properties.title は存在する場合がある
 
-  return textBlocks.length > 0
-    ? textBlocks
-    : ["内容が空か、読み取れるテキストがありません。"];
+    // Notion API response structure inspection might be needed for specific case,
+    // but usually for a page, structure is logic like this:
+    const titleProp = Object.values(pageData.properties).find(
+      (prop: any) => prop.id === "title" || prop.type === "title",
+    ) as any;
+    if (titleProp && titleProp.title && titleProp.title.length > 0) {
+      title = titleProp.title[0].plain_text;
+    }
+  }
+
+  const textBlocks = blocksData.results
+    .filter((block: any) =>
+      ["paragraph", "heading_1", "heading_2", "heading_3"].includes(block.type),
+    )
+    .map((block: any) => {
+      const type = block.type;
+      const richText = block[type].rich_text;
+      return richText.map((t: any) => t.plain_text).join("") || " ";
+    });
+
+  const content =
+    textBlocks.length > 0
+      ? textBlocks
+      : ["内容が空か、読み取れるテキストがありません。"];
+
+  return { title, content };
 };

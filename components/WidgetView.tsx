@@ -3,14 +3,18 @@
 import {
   FlexWidget,
   ListWidget,
-  TextWidget
+  TextWidget,
 } from "react-native-android-widget";
 
 export interface WidgetViewProps {
   items?: string[];
+  title?: string;
 }
 
-export function WidgetView({ items = ["読み込み中..."] }: WidgetViewProps) {
+export function WidgetView({
+  items = ["読み込み中..."],
+  title = "📌 Notion最新",
+}: WidgetViewProps) {
   return (
     <FlexWidget
       style={{
@@ -22,7 +26,7 @@ export function WidgetView({ items = ["読み込み中..."] }: WidgetViewProps) 
     >
       <ListWidget style={{ height: "match_parent", width: "match_parent" }}>
         <TextWidget
-          text="📌 Notion最新"
+          text={title}
           clickAction="OPEN_MAIN"
           style={{
             color: "#9B9B9B",

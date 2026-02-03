@@ -14,6 +14,8 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case "WIDGET_UPDATE":
     case "WIDGET_ADDED":
       const savedText = await AsyncStorage.getItem("latest_notion_text");
+      const savedTitle =
+        (await AsyncStorage.getItem("latest_notion_title")) || "Notion";
       let items: string[] = ["メモがありません"];
       if (savedText) {
         try {
@@ -28,7 +30,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           items = [savedText];
         }
       }
-      renderWidget(<WidgetView items={items} />);
+      renderWidget(<WidgetView title={savedTitle} items={items} />);
       break;
     case "WIDGET_CLICK":
       if (clickAction === "OPEN_MAIN") {
@@ -42,12 +44,13 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         Linking.openURL("notionmemo://quick-input");
       }
       if (clickAction === "REFRESH") {
-        const textArray = await fetchNotionData();
+        const data = await fetchNotionData();
         await AsyncStorage.setItem(
           "latest_notion_text",
-          JSON.stringify(textArray),
+          JSON.stringify(data.content),
         );
-        renderWidget(<WidgetView items={textArray} />);
+        await AsyncStorage.setItem("latest_notion_title", data.title);
+        renderWidget(<WidgetView title={data.title} items={data.content} />);
       }
       break;
     default:
