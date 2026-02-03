@@ -1,4 +1,4 @@
-export const fetchNotionData = async () => {
+export const fetchNotionData = async (): Promise<string[]> => {
   // 指定したページの「子ブロック」を取得
   const response = await fetch(
     `https://api.notion.com/v1/blocks/${process.env.EXPO_PUBLIC_BLOCK_ID}/children`,
@@ -21,7 +21,8 @@ export const fetchNotionData = async () => {
     .filter((block: any) => block.type === "paragraph")
     .map(
       (block: any) =>
-        block.paragraph.rich_text.map((t: any) => t.plain_text).join("") || "",
+        //空白行だとfalsyとなり、空文字列に変換する
+        block.paragraph.rich_text.map((t: any) => t.plain_text).join("") || " ",
     );
   console.log(textBlocks);
 
