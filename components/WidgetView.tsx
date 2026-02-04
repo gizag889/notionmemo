@@ -8,7 +8,7 @@ import {
 } from "react-native-android-widget";
 
 export interface WidgetViewProps {
-  items?: string[];
+  items?: { type: string; text: string }[] | string[];
   title?: string;
 }
 
@@ -25,9 +25,16 @@ const HEADER_ICON_SVG = `
 `;
 
 export function WidgetView({
-  items = ["読み込み中..."],
+  items = [{ type: "paragraph", text: "読み込み中..." }],
   title = "📌 Notion最新",
 }: WidgetViewProps) {
+  // Helper to normalize items to structured format for backward compatibility
+  const normalizedItems: { type: string; text: string }[] = Array.isArray(items)
+    ? items.map((item) =>
+        typeof item === "string" ? { type: "paragraph", text: item } : item,
+      )
+    : [];
+
   return (
     <FlexWidget
       style={{
@@ -56,7 +63,7 @@ export function WidgetView({
               marginTop: 12,
               marginBottom: 4,
             }}
-          >   
+          >
             <TextWidget
               text={title}
               style={{
@@ -64,7 +71,7 @@ export function WidgetView({
                 fontSize: 14,
               }}
             />
-             <SvgWidget
+            <SvgWidget
               svg={HEADER_ICON_SVG}
               style={{
                 height: 12,
@@ -73,17 +80,26 @@ export function WidgetView({
               }}
             />
           </FlexWidget>
-          {items.map((item, index) => (
+          {normalizedItems.map((item, index) => (
             <TextWidget
               key={index}
-              text={item}
+              text={item.text}
               clickAction="OPEN_MAIN"
               style={{
                 color: "#E6E6E6",
-                fontSize: 14,
+                fontSize:
+                  item.type === "heading_1"
+                    ? 20
+                    : item.type === "heading_2"
+                      ? 18
+                      : item.type === "heading_3"
+                        ? 16
+                        : 14,
+                fontWeight: item.type.startsWith("heading") ? "bold" : "normal",
                 marginLeft: 12,
                 marginRight: 12,
-                marginBottom: 12,
+                marginBottom: item.type.startsWith("heading") ? 6 : 12,
+                marginTop: item.type.startsWith("heading") ? 12 : 0,
               }}
             />
           ))}

@@ -45,15 +45,14 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
       }
       if (clickAction === "REFRESH") {
         const data = await fetchNotionData();
-        const contentStrings = data.content.map((item) => item.text);
 
         await AsyncStorage.setItem(
           "latest_notion_text",
-          JSON.stringify(contentStrings),
+          JSON.stringify(data.content),
         );
         await AsyncStorage.setItem("latest_notion_title", data.title);
         await AsyncStorage.setItem("latest_notion_page_id", data.pageId);
-        renderWidget(<WidgetView title={data.title} items={contentStrings} />);
+        renderWidget(<WidgetView title={data.title} items={data.content} />);
       }
       if (clickAction === "OPEN_NOTION") {
         const pageId =

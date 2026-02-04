@@ -47,11 +47,16 @@ export const fetchNotionData = async (): Promise<{
 
   const textBlocks = blocksData.results
     .filter((block: any) =>
+      //block.typeのうち本文と見出しのみを取得
       ["paragraph", "heading_1", "heading_2", "heading_3"].includes(block.type),
     )
     .map((block: any) => {
+      //block[type]: ブロックの種類（例：paragraph）に合わせて、その中身のデータにアクセスしています
       const type = block.type;
+      //rich_text: テキストの装飾情報（太字、斜体など）が含まれる配列
       const richText = block[type].rich_text;
+      //.map(...): 太字や斜体などで分割されているテキストのかけらから、純粋な文字情報（plain_text）だけを取り出します。
+      //.join(""): 取り出したテキストの断片をくっつけて、一つの文字列にします。
       const text = richText.map((t: any) => t.plain_text).join("") || " ";
       return { type, text };
     });
