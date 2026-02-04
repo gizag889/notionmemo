@@ -45,12 +45,23 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
       }
       if (clickAction === "REFRESH") {
         const data = await fetchNotionData();
+        const contentStrings = data.content.map((item) => item.text);
+
         await AsyncStorage.setItem(
           "latest_notion_text",
-          JSON.stringify(data.content),
+          JSON.stringify(contentStrings),
         );
         await AsyncStorage.setItem("latest_notion_title", data.title);
-        renderWidget(<WidgetView title={data.title} items={data.content} />);
+        await AsyncStorage.setItem("latest_notion_page_id", data.pageId);
+        renderWidget(<WidgetView title={data.title} items={contentStrings} />);
+      }
+      if (clickAction === "OPEN_NOTION") {
+        const pageId =
+          (await AsyncStorage.getItem("latest_notion_page_id")) ||
+          process.env.EXPO_PUBLIC_BLOCK_ID;
+        if (pageId) {
+          Linking.openURL(`https://www.notion.so/${pageId.replace(/-/g, "")}`);
+        }
       }
       break;
     default:

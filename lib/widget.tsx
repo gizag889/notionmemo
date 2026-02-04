@@ -5,15 +5,23 @@ import { WidgetView } from "../components/WidgetView";
 
 export const updateWidgetContent = async (data: {
   title: string;
-  content: string[];
+  content: { type: string; text: string }[] | string[];
+  pageId: string;
 }) => {
+  const contentStrings = data.content.map((item) =>
+    typeof item === "string" ? item : item.text,
+  );
+
   await AsyncStorage.setItem(
     "latest_notion_text",
-    JSON.stringify(data.content),
+    JSON.stringify(contentStrings),
   );
   await AsyncStorage.setItem("latest_notion_title", data.title);
+  await AsyncStorage.setItem("latest_notion_page_id", data.pageId);
   requestWidgetUpdate({
     widgetName: "NotionClipboardWidget",
-    renderWidget: () => <WidgetView title={data.title} items={data.content} />,
+    renderWidget: () => (
+      <WidgetView title={data.title} items={contentStrings} />
+    ),
   });
 };

@@ -1,6 +1,7 @@
 export const fetchNotionData = async (): Promise<{
   title: string;
-  content: string[];
+  content: { type: string; text: string }[];
+  pageId: string;
 }> => {
   const pageId = process.env.EXPO_PUBLIC_BLOCK_ID;
   const headers = {
@@ -51,13 +52,19 @@ export const fetchNotionData = async (): Promise<{
     .map((block: any) => {
       const type = block.type;
       const richText = block[type].rich_text;
-      return richText.map((t: any) => t.plain_text).join("") || " ";
+      const text = richText.map((t: any) => t.plain_text).join("") || " ";
+      return { type, text };
     });
 
   const content =
     textBlocks.length > 0
       ? textBlocks
-      : ["内容が空か、読み取れるテキストがありません。"];
+      : [
+          {
+            type: "paragraph",
+            text: "内容が空か、読み取れるテキストがありません。",
+          },
+        ];
 
-  return { title, content };
+  return { title, content, pageId: pageId || "" };
 };
