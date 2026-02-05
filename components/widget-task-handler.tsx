@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Linking } from "react-native";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
 import { WidgetView } from "../components/WidgetView";
-import { fetchNotionData } from "../lib/notion";
+import { fetchNotionData, getTextFromBlock } from "../lib/notion";
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
   // WidgetTaskHandlerPropsからclickAction renderWidgetを分割代入で取り出す
@@ -46,13 +46,18 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
       if (clickAction === "REFRESH") {
         const data = await fetchNotionData();
 
+        const simpleContent = data.content.map((block) => ({
+          type: block.type,
+          text: getTextFromBlock(block),
+        }));
+
         await AsyncStorage.setItem(
           "latest_notion_text",
-          JSON.stringify(data.content),
+          JSON.stringify(simpleContent),
         );
         await AsyncStorage.setItem("latest_notion_title", data.title);
         await AsyncStorage.setItem("latest_notion_page_id", data.pageId);
-        renderWidget(<WidgetView title={data.title} items={data.content} />);
+        renderWidget(<WidgetView title={data.title} items={simpleContent} />);
       }
       if (clickAction === "OPEN_NOTION") {
         const pageId =
