@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Circle, Path, Svg } from "react-native-svg";
 
 const HelpIcon = () => (
@@ -25,8 +26,8 @@ const queryClient = new QueryClient();
 
 export default function Layout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <View style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
         <Stack>
           <Stack.Screen
             name="index"
@@ -56,8 +57,8 @@ export default function Layout() {
             }}
           />
         </Stack>
-      </View>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 

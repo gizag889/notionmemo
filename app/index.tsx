@@ -1,7 +1,7 @@
 "use no memo";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -12,6 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { SvgWidget } from "../components/SvgWidget";
 import { fetchNotionData, getTextFromBlock } from "../lib/notion";
 import { updateWidgetContent } from "../lib/widget";
@@ -23,6 +28,8 @@ const ICON_SVG = `
 export default function HomeScreen() {
   //ページ遷移用のrouter
   const router = useRouter();
+  //スクロールビューを入れるための「予約席」を作ります
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const {
     //楽観的観測 pending
@@ -36,6 +43,30 @@ export default function HomeScreen() {
     queryFn: fetchNotionData,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+  });
+
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
+
+  const pan = Gesture.Pan()
+    .onStart(() => {
+      startX.value = translateX.value;
+      startY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      translateX.value = startX.value + event.translationX;
+      translateY.value = startY.value + event.translationY;
+    });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+      ],
+    };
   });
 
   useEffect(() => {
@@ -62,6 +93,12 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
+      //画面上のスクロールビューの実体がその予約席にセットされます
+      ref={scrollViewRef}
+      onContentSizeChange={() =>
+        //スクロールビューの内容が変更されたときに、スクロールビューを一番下までスクロールする
+        scrollViewRef.current?.scrollToEnd({ animated: true })
+      }
       style={styles.container}
       refreshControl={
         //Pull to Refresh モバイルのプラクティス
@@ -120,12 +157,16 @@ export default function HomeScreen() {
         )}
       </View>
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/quick-input")}
-      >
-        <Text style={styles.fabText}>＋</Text>
-      </TouchableOpacity>
+      <GestureDetector gesture={pan}>
+        <Animated.View style={[styles.fab, animatedStyle]}>
+          <TouchableOpacity
+            style={styles.touchableArea}
+            onPress={() => router.push("/quick-input")}
+          >
+            <Text style={styles.fabText}>＋</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </GestureDetector>
     </ScrollView>
   );
 }
@@ -193,6 +234,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 5,
+    // Remove justifyContent and alignItems here to let child TouchableOpacity handle centering or maintain layout
+    // justifyContent: "center",
+    // alignItems: "center",
+  },
+  touchableArea: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
   fabText: { color: "#fff", fontSize: 30, marginBottom: 4 },
 });
