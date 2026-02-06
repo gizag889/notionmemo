@@ -131,14 +131,14 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { padding: 20, paddingTop: 40 },
   headerContent: { flexDirection: "row", alignItems: "center" },
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#333",
+    color: "#37352F",
     textDecorationLine: "underline",
   },
   card: {
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     lineHeight: 32,
     fontWeight: "bold",
-    color: "#333",
+    color: "#37352F",
     marginTop: 16,
     marginBottom: 8,
   },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 28,
     fontWeight: "bold",
-    color: "#333",
+    color: "#37352F",
     marginTop: 12,
     marginBottom: 6,
   },
@@ -172,14 +172,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 26,
     fontWeight: "bold",
-    color: "#333",
+    color: "#37352F",
     marginTop: 8,
     marginBottom: 4,
   },
   paragraph: {
     fontSize: 16,
     lineHeight: 24,
-    color: "#444",
+    color: "#37352F",
     marginBottom: 6,
   },
   fab: {

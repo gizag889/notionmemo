@@ -1,13 +1,20 @@
 "use no memo";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, StyleSheet, TextInput, View } from "react-native";
-import { fetchNotionData } from "../lib/notion";
+import { fetchNotionData, fetchPageTitle } from "../lib/notion";
 import { updateWidgetContent } from "../lib/widget";
 
 export default function QuickInputScreen() {
   const [text, setText] = useState("");
+  const [buttonTitle, setButtonTitle] = useState("Notion");
   const router = useRouter();
+
+  useEffect(() => {
+    fetchPageTitle()
+      .then((title) => setButtonTitle(title))
+      .catch((err) => console.error("Failed to fetch page title:", err));
+  }, []);
   /**
    *
    * @returns
@@ -64,10 +71,11 @@ export default function QuickInputScreen() {
         autoFocus
         style={styles.input}
         placeholder="ここにメモを入力..."
+        placeholderTextColor="#9B9B9B"
         value={text}
         onChangeText={setText}
       />
-      <Button title="Notionに追加" onPress={handleSend} />
+      <Button title={`${buttonTitle}に追加`} onPress={handleSend} />
     </View>
   );
 }
@@ -76,7 +84,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, justifyContent: "center" },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E9E9E8",
     padding: 15,
     marginBottom: 20,
     borderRadius: 10,

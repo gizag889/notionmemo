@@ -6,6 +6,39 @@ import {
   RichTextItemResponse,
 } from "@notionhq/client/build/src/api-endpoints";
 
+export const fetchPageTitle = async (): Promise<string> => {
+  const pageId = process.env.EXPO_PUBLIC_BLOCK_ID;
+  const headers = {
+    Authorization: `Bearer ${process.env.EXPO_PUBLIC_NOTION_TOKEN}`,
+    "Notion-Version": "2022-06-28",
+  };
+
+  const pageResponse = await fetch(
+    `https://api.notion.com/v1/pages/${pageId}`,
+    { headers },
+  );
+
+  if (!pageResponse.ok) {
+    throw new Error("Network response was not ok");
+  }
+
+  const pageData = (await pageResponse.json()) as
+    | PageObjectResponse
+    | PartialPageObjectResponse;
+
+  let title = "Notion Memo";
+  if ("properties" in pageData) {
+    const titleProp = Object.values(pageData.properties).find(
+      (prop) => prop.type === "title",
+    );
+
+    if (titleProp && titleProp.type === "title" && titleProp.title.length > 0) {
+      title = titleProp.title[0].plain_text;
+    }
+  }
+  return title;
+};
+
 export const fetchNotionData = async (): Promise<{
   title: string;
   content: BlockObjectResponse[];
@@ -17,40 +50,20 @@ export const fetchNotionData = async (): Promise<{
     "Notion-Version": "2022-06-28",
   };
 
-  // ページ情報を取得（タイトル用）
-  const pageResponse = await fetch(
-    `https://api.notion.com/v1/pages/${pageId}`,
-    { headers },
-  );
-
   // ブロックを取得（本文用）
   const blocksResponse = await fetch(
     `https://api.notion.com/v1/blocks/${pageId}/children`,
     { headers },
   );
 
-  if (!pageResponse.ok || !blocksResponse.ok) {
+  if (!blocksResponse.ok) {
     throw new Error("Network response was not ok");
   }
 
-  const pageData = (await pageResponse.json()) as
-    | PageObjectResponse
-    | PartialPageObjectResponse;
+  // 並行してタイトルを取得
+  const titlePromise = fetchPageTitle();
   const blocksData = await blocksResponse.json();
-
-  // タイトルの取得
-  let title = "Notion Memo";
-  if ("properties" in pageData) {
-    // データベース内のページの場合、プロパティ名は "Name" or "title" などユーザー設定による
-    // ここでは汎用的に "title" タイプのプロパティを探す
-    const titleProp = Object.values(pageData.properties).find(
-      (prop) => prop.type === "title",
-    );
-
-    if (titleProp && titleProp.type === "title" && titleProp.title.length > 0) {
-      title = titleProp.title[0].plain_text;
-    }
-  }
+  const title = await titlePromise;
 
   const textBlocks = (
     blocksData.results as (BlockObjectResponse | PartialBlockObjectResponse)[]
