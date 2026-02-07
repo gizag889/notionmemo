@@ -1,9 +1,11 @@
 "use no memo";
 import { useQuery } from "@tanstack/react-query";
+import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Linking,
   RefreshControl,
   ScrollView,
@@ -25,10 +27,14 @@ const ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>
 `;
 const DRAG_ICON_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-vertical-icon lucide-grip-vertical"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-icon lucide-grip"><circle cx="12" cy="5" r="1"/><circle cx="19" cy="5" r="1"/><circle cx="5" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="19" r="1"/><circle cx="19" cy="19" r="1"/><circle cx="5" cy="19" r="1"/></svg>
 `;
 const SCROLL_UP_ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+`;
+
+const COPY_ICON_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
 `;
 
 export default function HomeScreen() {
@@ -75,6 +81,17 @@ export default function HomeScreen() {
     };
   });
 
+  const handleCopy = async () => {
+    if (content?.content) {
+      const text = content.content
+        .map((block) => getTextFromBlock(block))
+        .join("\n");
+      // @ts-ignore
+      await Clipboard.setStringAsync(text);
+      Alert.alert("コピーしました", "クリップボードに保存しました。");
+    }
+  };
+
   useEffect(() => {
     if (content) {
       updateWidgetContent(content);
@@ -103,7 +120,7 @@ export default function HomeScreen() {
       ref={scrollViewRef}
       onContentSizeChange={() => {
         // 初回ロード時やコンテンツ変更時に自動スクロールさせたい場合はここを調整
-        // scrollViewRef.current?.scrollToEnd({ animated: true })
+        scrollViewRef.current?.scrollToEnd({ animated: true });
       }}
       style={styles.container}
       refreshControl={
@@ -145,6 +162,7 @@ export default function HomeScreen() {
           content.content.map((block, index) => {
             return (
               <Text
+                selectable={true}
                 key={index}
                 style={[
                   styles.paragraph,
@@ -159,11 +177,15 @@ export default function HomeScreen() {
             );
           })
         ) : (
-          <Text style={styles.paragraph}>{/* Fallback or empty */}</Text>
+          <Text selectable={true} style={styles.paragraph}>
+            {/* Fallback or empty */}
+          </Text>
         )}
       </View>
 
       <Animated.View style={[styles.fabContainer, animatedStyle]}>
+       
+
         {/* Scroll To Top */}
         <TouchableOpacity
           style={styles.controlButton}
@@ -177,6 +199,11 @@ export default function HomeScreen() {
             height={24}
             color="#fff"
           />
+        </TouchableOpacity>
+        
+         {/* Copy Button */}
+        <TouchableOpacity style={styles.controlButton} onPress={handleCopy}>
+          <SvgWidget svg={COPY_ICON_SVG} width={24} height={24} color="#fff" />
         </TouchableOpacity>
 
         {/* Quick Input */}
