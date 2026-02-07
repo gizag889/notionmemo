@@ -7,6 +7,7 @@ interface SvgWidgetProps {
   width?: number | string;
   height?: number | string;
   style?: StyleProp<ViewStyle>;
+  color?: string;
 }
 
 export function SvgWidget({
@@ -14,6 +15,15 @@ export function SvgWidget({
   width = 24,
   height = 24,
   style,
+  color,
 }: SvgWidgetProps) {
-  return <SvgXml xml={svg} width={width} height={height} style={style} />;
+  return (
+    <SvgXml
+      xml={svg}
+      width={width}
+      height={height}
+      style={style}
+      color={color}
+    />
+  );
 }

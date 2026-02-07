@@ -24,6 +24,12 @@ import { updateWidgetContent } from "../lib/widget";
 const ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>
 `;
+const DRAG_ICON_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-vertical-icon lucide-grip-vertical"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+`;
+const SCROLL_UP_ICON_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+`;
 
 export default function HomeScreen() {
   //ページ遷移用のrouter
@@ -95,10 +101,10 @@ export default function HomeScreen() {
     <ScrollView
       //画面上のスクロールビューの実体がその予約席にセットされます
       ref={scrollViewRef}
-      onContentSizeChange={() =>
-        //スクロールビューの内容が変更されたときに、スクロールビューを一番下までスクロールする
-        scrollViewRef.current?.scrollToEnd({ animated: true })
-      }
+      onContentSizeChange={() => {
+        // 初回ロード時やコンテンツ変更時に自動スクロールさせたい場合はここを調整
+        // scrollViewRef.current?.scrollToEnd({ animated: true })
+      }}
       style={styles.container}
       refreshControl={
         //Pull to Refresh モバイルのプラクティス
@@ -157,16 +163,42 @@ export default function HomeScreen() {
         )}
       </View>
 
-      <GestureDetector gesture={pan}>
-        <Animated.View style={[styles.fab, animatedStyle]}>
-          <TouchableOpacity
-            style={styles.touchableArea}
-            onPress={() => router.push("/quick-input")}
-          >
-            <Text style={styles.fabText}>＋</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </GestureDetector>
+      <Animated.View style={[styles.fabContainer, animatedStyle]}>
+        {/* Scroll To Top */}
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => {
+            scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+          }}
+        >
+          <SvgWidget
+            svg={SCROLL_UP_ICON_SVG}
+            width={24}
+            height={24}
+            color="#fff"
+          />
+        </TouchableOpacity>
+
+        {/* Quick Input */}
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => router.push("/quick-input")}
+        >
+          <Text style={styles.fabText}>＋</Text>
+        </TouchableOpacity>
+
+        {/* Drag Handle */}
+        <GestureDetector gesture={pan}>
+          <View style={styles.dragHandle}>
+            <SvgWidget
+              svg={DRAG_ICON_SVG}
+              width={24}
+              height={24}
+              color="#fff"
+            />
+          </View>
+        </GestureDetector>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -223,26 +255,29 @@ const styles = StyleSheet.create({
     color: "#37352F",
     marginBottom: 6,
   },
-  fab: {
+  fabContainer: {
     position: "absolute",
     right: 20,
-    top: 500, // レイアウトに合わせて調整
+    bottom: 120, // レイアウトに合わせて調整
     backgroundColor: "#000",
     width: 60,
-    height: 60,
     borderRadius: 30,
-    justifyContent: "center",
     alignItems: "center",
     elevation: 5,
-    // Remove justifyContent and alignItems here to let child TouchableOpacity handle centering or maintain layout
-    // justifyContent: "center",
-    // alignItems: "center",
+    paddingVertical: 12,
+    gap: 12,
   },
-  touchableArea: {
-    width: "100%",
-    height: "100%",
+  controlButton: {
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
   },
-  fabText: { color: "#fff", fontSize: 30, marginBottom: 4 },
+  dragHandle: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fabText: { color: "#fff", fontSize: 30, lineHeight: 34 },
 });
