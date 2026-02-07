@@ -1,5 +1,6 @@
 "use no memo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Clipboard from "expo-clipboard";
 import { Linking } from "react-native";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
 import { WidgetView } from "../components/WidgetView";
@@ -65,6 +66,30 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           process.env.EXPO_PUBLIC_BLOCK_ID;
         if (pageId) {
           Linking.openURL(`https://www.notion.so/${pageId.replace(/-/g, "")}`);
+        }
+      }
+      if (clickAction === "COPY") {
+        const savedText = await AsyncStorage.getItem("latest_notion_text");
+        if (savedText) {
+          try {
+            const parsed = JSON.parse(savedText);
+            let textToCopy = "";
+
+            if (Array.isArray(parsed)) {
+              textToCopy = parsed
+                .map((item) => (typeof item === "string" ? item : item.text))
+                .join("\n");
+            } else {
+              textToCopy = String(parsed);
+            }
+
+            if (textToCopy) {
+              await Clipboard.setStringAsync(textToCopy);
+            }
+          } catch (e) {
+            // Fallback for plain text legacy data
+            await Clipboard.setStringAsync(savedText);
+          }
         }
       }
       break;
