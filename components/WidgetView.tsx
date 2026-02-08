@@ -8,7 +8,7 @@ import {
 } from "react-native-android-widget";
 
 export interface WidgetViewProps {
-  items?: { type: string; text: string }[] | string[];
+  items?: (string | { type: string; text: string })[];
   title?: string;
 }
 
@@ -24,9 +24,9 @@ const HEADER_ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9B9B9B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>
 `;
 
-const COPY_ICON_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E6E6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-`;
+// const COPY_ICON_SVG = `
+// <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E6E6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+// `;
 
 export function WidgetView({
   items = [{ type: "paragraph", text: "読み込み中..." }],
@@ -34,17 +34,29 @@ export function WidgetView({
 }: WidgetViewProps) {
   // Helper to normalize items to structured format for backward compatibility
   const normalizedItems: { type: string; text: string }[] = Array.isArray(items)
-    ? items.map((item) =>
-        typeof item === "string" ? { type: "paragraph", text: item } : item,
-      )
+    ? items.map((item) => {
+        if (typeof item === "string") {
+          return { type: "paragraph", text: item };
+        }
+        if (!item) {
+          return { type: "paragraph", text: "" };
+        }
+        return {
+          type: item.type || "paragraph",
+          text: item.text || "",
+        };
+      })
     : [];
+
+  console.log(normalizedItems);
 
   return (
     <FlexWidget
       style={{
         height: "match_parent",
         width: "match_parent",
-        backgroundColor: "#191919",
+        // backgroundColor: "#191919",
+        backgroundColor: "#FFFFFF",
         borderRadius: 16,
       }}
     >
@@ -57,7 +69,13 @@ export function WidgetView({
           paddingTop: 12,
         }}
       >
-        <ListWidget style={{ height: "match_parent", width: "match_parent" }}>
+        <ListWidget
+          style={{
+            height: "match_parent",
+            width: "match_parent",
+            backgroundColor: "#FFFFFF",
+          }}
+        >
           <FlexWidget
             clickAction="OPEN_NOTION"
             style={{
@@ -87,7 +105,7 @@ export function WidgetView({
           {normalizedItems.map((item, index) => (
             <TextWidget
               key={index}
-              text={item.text}
+              text={item.text || " "}
               clickAction="OPEN_MAIN"
               style={{
                 color: "#E6E6E6",
@@ -137,7 +155,7 @@ export function WidgetView({
             }}
           />
         </FlexWidget>
-        <FlexWidget
+        {/* <FlexWidget
           clickAction="COPY"
           style={{
             paddingLeft: 14,
@@ -152,7 +170,7 @@ export function WidgetView({
               width: 28,
             }}
           />
-        </FlexWidget>
+        </FlexWidget> */}
         <FlexWidget
           clickAction="OPEN_INPUT"
           style={{

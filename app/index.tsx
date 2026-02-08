@@ -165,11 +165,13 @@ export default function HomeScreen() {
                 selectable={true}
                 key={index}
                 style={[
-                  styles.paragraph,
-                  block.type.startsWith("heading") && { fontWeight: "bold" },
-                  block.type === "heading_1" && styles.heading1,
-                  block.type === "heading_2" && styles.heading2,
-                  block.type === "heading_3" && styles.heading3,
+                  block.type === "heading_1"
+                    ? styles.heading1
+                    : block.type === "heading_2"
+                      ? styles.heading2
+                      : block.type === "heading_3"
+                        ? styles.heading3
+                        : styles.paragraph,
                 ]}
               >
                 {getTextFromBlock(block)}
@@ -184,8 +186,6 @@ export default function HomeScreen() {
       </View>
 
       <Animated.View style={[styles.fabContainer, animatedStyle]}>
-       
-
         {/* Scroll To Top */}
         <TouchableOpacity
           style={styles.controlButton}
@@ -200,8 +200,8 @@ export default function HomeScreen() {
             color="#fff"
           />
         </TouchableOpacity>
-        
-         {/* Copy Button */}
+
+        {/* Copy Button */}
         <TouchableOpacity style={styles.controlButton} onPress={handleCopy}>
           <SvgWidget svg={COPY_ICON_SVG} width={24} height={24} color="#fff" />
         </TouchableOpacity>

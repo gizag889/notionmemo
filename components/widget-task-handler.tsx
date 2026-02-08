@@ -68,30 +68,30 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           Linking.openURL(`https://www.notion.so/${pageId.replace(/-/g, "")}`);
         }
       }
-      if (clickAction === "COPY") {
-        const savedText = await AsyncStorage.getItem("latest_notion_text");
-        if (savedText) {
-          try {
-            const parsed = JSON.parse(savedText);
-            let textToCopy = "";
+      // if (clickAction === "COPY") {
+      //   const savedText = await AsyncStorage.getItem("latest_notion_text");
+      //   if (savedText) {
+      //     try {
+      //       const parsed = JSON.parse(savedText);
+      //       let textToCopy = "";
 
-            if (Array.isArray(parsed)) {
-              textToCopy = parsed
-                .map((item) => (typeof item === "string" ? item : item.text))
-                .join("\n");
-            } else {
-              textToCopy = String(parsed);
-            }
+      //       if (Array.isArray(parsed)) {
+      //         textToCopy = parsed
+      //           .map((item) => (typeof item === "string" ? item : item.text))
+      //           .join("\n");
+      //       } else {
+      //         textToCopy = String(parsed);
+      //       }
 
-            if (textToCopy) {
-              await Clipboard.setStringAsync(textToCopy);
-            }
-          } catch (e) {
-            // Fallback for plain text legacy data
-            await Clipboard.setStringAsync(savedText);
-          }
-        }
-      }
+      //       if (textToCopy) {
+      //         await Clipboard.setStringAsync(textToCopy);
+      //       }
+      //     } catch (e) {
+      //       // Fallback for plain text legacy data
+      //       await Clipboard.setStringAsync(savedText);
+      //     }
+      //   }
+      // }
       break;
     default:
       break;
