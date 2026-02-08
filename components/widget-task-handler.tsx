@@ -45,6 +45,27 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         Linking.openURL("notionmemo://quick-input");
       }
       if (clickAction === "REFRESH") {
+        // 現在のデータを取得して表示（ローディング状態）
+        const savedText = await AsyncStorage.getItem("latest_notion_text");
+        const savedTitle =
+          (await AsyncStorage.getItem("latest_notion_title")) || "Notion";
+        let items: any[] = [];
+        if (savedText) {
+          try {
+            items = JSON.parse(savedText);
+            if (!Array.isArray(items)) {
+              items = [String(items)];
+            }
+          } catch (e) {
+            items = [savedText];
+          }
+        }
+        // ローディング状態をtrueにして描画
+        renderWidget(
+          <WidgetView title={savedTitle} items={items} isLoading={true} />,
+        );
+
+        // データ取得
         const data = await fetchNotionData();
 
         const simpleContent = data.content.map((block) => ({
@@ -58,6 +79,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         );
         await AsyncStorage.setItem("latest_notion_title", data.title);
         await AsyncStorage.setItem("latest_notion_page_id", data.pageId);
+        // ローディング完了（isLoading=false）で描画
         renderWidget(<WidgetView title={data.title} items={simpleContent} />);
       }
       if (clickAction === "OPEN_NOTION") {

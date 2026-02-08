@@ -10,6 +10,7 @@ import {
 export interface WidgetViewProps {
   items?: (string | { type: string; text: string })[];
   title?: string;
+  isLoading?: boolean;
 }
 
 const REFRESH_ICON_SVG = `
@@ -31,6 +32,7 @@ const HEADER_ICON_SVG = `
 export function WidgetView({
   items = [{ type: "paragraph", text: "読み込み中..." }],
   title = "📌 Notion最新",
+  isLoading = false,
 }: WidgetViewProps) {
   // Helper to normalize items to structured format for backward compatibility
   const normalizedItems: { type: string; text: string }[] = Array.isArray(items)
@@ -55,8 +57,7 @@ export function WidgetView({
       style={{
         height: "match_parent",
         width: "match_parent",
-        // backgroundColor: "#191919",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#191919",
         borderRadius: 16,
       }}
     >
@@ -73,7 +74,7 @@ export function WidgetView({
           style={{
             height: "match_parent",
             width: "match_parent",
-            backgroundColor: "#FFFFFF",
+            backgroundColor: "#191919",
           }}
         >
           <FlexWidget
@@ -90,7 +91,8 @@ export function WidgetView({
               text={title}
               style={{
                 color: "#9B9B9B",
-                fontSize: 14,
+                fontSize: 16,
+                fontWeight: "bold",
               }}
             />
             <SvgWidget
@@ -145,11 +147,14 @@ export function WidgetView({
           style={{
             justifyContent: "center",
             alignItems: "center",
+            // backgroundColor: isLoading ? "#E6F0F5" : undefined,
+            borderRadius: 8,
           }}
         >
           <SvgWidget
             svg={REFRESH_ICON_SVG}
             style={{
+              rotation: isLoading ? 180 : 0,
               height: 28,
               width: 28,
             }}
