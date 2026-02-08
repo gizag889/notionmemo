@@ -216,7 +216,13 @@ export default function HomeScreen() {
 
         {/* Drag Handle */}
         <GestureDetector gesture={pan}>
-          <View style={styles.dragHandle}>
+          <View
+            style={styles.dragHandle}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="ドラッグハンドル"
+            accessibilityHint="ドラッグして位置を移動します"
+          >
             <SvgWidget
               svg={DRAG_ICON_SVG}
               width={24}

@@ -39,6 +39,10 @@ function AccordionItem({
         style={styles.accordionHeader}
         onPress={toggleExpand}
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: expanded }}
+        accessibilityLabel={title}
+        accessibilityHint="ダブルタップして詳細を展開または折りたたみます"
       >
         <Text style={styles.sectionTitle}>{title}</Text>
         {expanded ? (
