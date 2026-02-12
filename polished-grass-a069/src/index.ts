@@ -76,16 +76,6 @@ app.get('/auth/notion/callback', async (c) => {
 	}
 
 	return c.json({ error: 'Failed to obtain token' }, 400);
-
-	
 });
-
-// テスト専用のエンドポイント
-app.get('/test-redirect', (c) => {
-	
-  // あなたの app.json で設定した scheme が "myapp" の場合
-  return c.redirect('notionmemo://auth-success?user_id=test_user_123')
-  
-})
 
 export default app;

@@ -2,37 +2,33 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Text, View, ActivityIndicator } from 'react-native';
+import { saveAuthData } from '../utils/storage'; // 先ほど作った関数
 
 export default function AuthSuccess() {
-  const { user_id } = useLocalSearchParams(); // URLの ?user_id=xxx を取得
+  const { user_id } = useLocalSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    if (user_id) {
-      console.log("取得したUser ID:", user_id);
-      
-      // ここで本来は：
-      // 1. SecureStore などに user_id を保存
-      // 2. 数秒後にホーム画面（/）へ自動移動させる、などの処理を行う
-      
-      // テスト用に3秒後にトップへ戻る例：
-      setTimeout(() => {
-        router.replace('/'); 
-      }, 3000);
+    async function handleLogin() {
+      if (user_id && typeof user_id === 'string') {
+        // --- ここで金庫に保存！ ---
+        await saveAuthData(user_id);
+        console.log("SecureStoreに保存完了:", user_id);
+
+        // 保存できたことを確認してホーム画面へ
+        setTimeout(() => {
+          router.replace('/'); 
+        }, 1500);
+      }
     }
+    handleLogin();
   }, [user_id]);
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#121212' }}>
       <ActivityIndicator size="large" color="#FFEE58" />
-      <Text style={{ color: 'white', marginTop: 20 }}>
-        ログインに成功しました！
-      </Text>
-      <Text style={{ color: '#aaa', fontSize: 12 }}>
-        User ID: {user_id}
-      </Text>
-      <Text style={{ color: '#aaa', fontSize: 12, marginTop: 10 }}>
-        まもなくホームへ戻ります...
+      <Text style={{ color: 'white', marginTop: 20, fontSize: 18, fontWeight: 'bold' }}>
+        認証を完了しています...
       </Text>
     </View>
   );
