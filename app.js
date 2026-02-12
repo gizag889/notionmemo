@@ -17,6 +17,8 @@ export default function App() {
         setUserId(queryParams.user_id);
         // ここでSecureStoreなどにuser_idを保存するロジックを入れる
         alert(`ログイン成功！ User ID: ${queryParams.user_id}`);
+
+        
       }
     }
   }, [url]);

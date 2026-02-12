@@ -47,7 +47,7 @@ app.get('/auth/notion/callback', async (c) => {
 		body: JSON.stringify({
 			grant_type: 'authorization_code',
 			code: code,
-			redirect_uri: 'https://polished-grass-a069.xxx.workers.dev/auth/notion/callback',
+			redirect_uri: 'https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/callback',
 		}),
 	});
 
@@ -82,8 +82,10 @@ app.get('/auth/notion/callback', async (c) => {
 
 // テスト専用のエンドポイント
 app.get('/test-redirect', (c) => {
+	
   // あなたの app.json で設定した scheme が "myapp" の場合
   return c.redirect('notionmemo://auth-success?user_id=test_user_123')
+  
 })
 
 export default app;
