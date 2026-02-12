@@ -18,8 +18,13 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "data": { "scheme": "notionmemo" },
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": {
+            "scheme": "notionmemo"
+          },
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -41,7 +46,15 @@
           }
         }
       ],
-      "react-native-android-widget"
+      "react-native-android-widget",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "gizag889",
+          "organization": "gizag889"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

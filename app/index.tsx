@@ -22,6 +22,7 @@ import Animated, {
 import { SvgWidget } from "../components/SvgWidget";
 import { fetchNotionData, getTextFromBlock } from "../lib/notion";
 import { updateWidgetContent } from "../lib/widget";
+import { Button } from "react-native";
 
 const ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><path d="m21 3-9 9"/><path d="M15 3h6v6"/></svg>
@@ -116,6 +117,8 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
+
+    
       //画面上のスクロールビューの実体がその予約席にセットされます
       ref={scrollViewRef}
       onContentSizeChange={() => {
@@ -155,6 +158,9 @@ export default function HomeScreen() {
             style={{ marginRight: 8 }}
           />
         </View>
+      </TouchableOpacity>
+      <TouchableOpacity>
+        <Text>ページを連携する</Text>
       </TouchableOpacity>
 
       <View style={styles.card}>
@@ -232,6 +238,7 @@ export default function HomeScreen() {
           </View>
         </GestureDetector>
       </Animated.View>
+<Button title="Press me" onPress={() => { throw new Error('Hello, again, Sentry!'); }}/>
     </ScrollView>
   );
 }

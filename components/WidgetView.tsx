@@ -50,7 +50,6 @@ export function WidgetView({
       })
     : [];
 
-  console.log(normalizedItems);
 
   return (
     <FlexWidget
