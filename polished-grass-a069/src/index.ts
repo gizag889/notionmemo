@@ -53,6 +53,38 @@ app.get('/auth/notion/callback', async (c) => {
 
 	const tokenData = (await response.json()) as NotionTokenResponse;
 
+// app/index.ts に追加
+
+// Notionからページ一覧を取得するエンドポイント
+app.get('/get-pages', async (c) => {
+  const userId = c.req.query('user_id');
+  if (!userId) return c.json({ error: 'User ID is required' }, 400);
+
+  // 1. D1からアクセストークンを取得
+  const user = await c.env.DB.prepare(
+    "SELECT access_token FROM users WHERE notion_user_id = ?"
+  ).bind(userId).first<{ access_token: string }>();
+
+  if (!user) return c.json({ error: 'User not found' }, 404);
+
+  // 2. Notion APIを叩いて、連携済みのページ一覧を取得
+  const response = await fetch('https://api.notion.com/v1/search', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${user.access_token}`,
+      'Notion-Version': '2022-06-28', // 現在の安定版バージョン
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      filter: { property: 'object', value: 'page' },
+      page_size: 10,
+    }),
+  });
+
+  const data = await response.json();
+  return c.json(data);
+});
+
 	// ユーザーIDとアクセストークンの抽出
 	const notionUserId = tokenData.owner?.user?.id;
 	const accessToken = tokenData.access_token;
