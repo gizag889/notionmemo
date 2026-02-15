@@ -2,27 +2,28 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Text, View, ActivityIndicator } from 'react-native';
-import { saveAuthData } from '../utils/storage'; // 先ほど作った関数
+import { saveAuthData } from '../utils/storage'; 
+
+//Notionの認証が完了すると、バックエンド（polished-grass-a069）からアプリのこのページ（auth-success）にリダイレクトされ
 
 export default function AuthSuccess() {
   const { user_id } = useLocalSearchParams();
   const router = useRouter();
 
-  useEffect(() => {
-    async function handleLogin() {
-      if (user_id && typeof user_id === 'string') {
-        // --- ここで金庫に保存！ ---
-        await saveAuthData(user_id);
-        console.log("SecureStoreに保存完了:", user_id);
+useEffect(() => {
+  async function handleLogin() {
 
-        // 保存できたことを確認してホーム画面へ
-        setTimeout(() => {
-          router.replace('/'); 
-        }, 1500);
-      }
+    if (user_id && typeof user_id === "string") {
+      await saveAuthData(user_id);       
+      router.replace('/');
+    } else {
+      console.log("2. エラー: user_id が無効です", typeof user_id);
     }
-    handleLogin();
-  }, [user_id]);
+
+  }
+  handleLogin();
+
+}, [user_id]);
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#121212' }}>

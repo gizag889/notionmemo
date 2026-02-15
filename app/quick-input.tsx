@@ -1,92 +1,201 @@
-"use no memo";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Button, StyleSheet, TextInput, View } from "react-native";
-import { fetchNotionData, fetchPageTitle } from "../lib/notion";
-import { updateWidgetContent } from "../lib/widget";
+// app/index.tsx
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { getAuthData } from "../utils/storage";
 
-export default function QuickInputScreen() {
-  const [text, setText] = useState("");
-  const [buttonTitle, setButtonTitle] = useState("Notion");
-  const router = useRouter();
+interface NotionPage {
+  id: string;
+  properties: {
+    title?: {
+      title: { plain_text: string }[];
+    };
+    [key: string]: any;
+  };
+}
 
-  useEffect(() => {
-    fetchPageTitle()
-      .then((title) => setButtonTitle(title))
-      .catch((err) => console.error("Failed to fetch page title:", err));
-  }, []);
-  /**
-   *
-   * @returns
-   */
-  const handleSend = async () => {
-    if (!text) return;
+export default function Home() {
+  const [pages, setPages] = useState<NotionPage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // 入力用ステート
+  const [memoText, setMemoText] = useState("");
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+
+  // ページ一覧取得
+  useFocusEffect(
+    useCallback(() => {
+      async function init() {
+        const id = await getAuthData();
+        if (id) {
+          setUserId(id);
+          fetchPages(id);
+        }
+      }
+      init();
+    }, []),
+  );
+
+  async function fetchPages(id: string) {
+    setLoading(true);
     try {
-      const response = await fetch(
-        `https://api.notion.com/v1/blocks/${process.env.EXPO_PUBLIC_BLOCK_ID}/children`,
+      const res = await fetch(
+        `https://polished-grass-a069.gizaguri0426.workers.dev/get-pages?user_id=${id}`,
+      );
+      const data = await res.json();
+      setPages(data.results || []);
+      // 最初のページをデフォルトで選択
+      if (data.results?.length > 0) setSelectedPageId(data.results[0].id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // メモ送信処理
+  async function handleSendMemo() {
+    if (!memoText || !selectedPageId || !userId) {
+      Alert.alert("エラー", "メモを入力し、ページを選択してください");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const res = await fetch(
+        "https://polished-grass-a069.gizaguri0426.workers.dev/add-memo",
         {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${process.env.EXPO_PUBLIC_NOTION_TOKEN}`,
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28",
-          },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            children: [
-              {
-                object: "block",
-                type: "paragraph",
-                paragraph: {
-                  rich_text: [{ text: { content: text } }],
-                },
-              },
-            ],
+            user_id: userId,
+            page_id: selectedPageId,
+            content: memoText,
           }),
         },
       );
 
-      if (response.ok) {
-        // 1. Notionから最新の全データを再取得
-        const newFullText = await fetchNotionData();
-        await updateWidgetContent(newFullText);
-
-        alert("Notionに追加し、ウィジェットを更新しました！");
-        // 入力画面を閉じてメイン画面に戻る
-        router.dismiss();
+      if (res.ok) {
+        Alert.alert("成功", "Notionにメモを追記しました！");
+        setMemoText(""); // 入力欄をクリア
       } else {
-        const error = await response.json();
-        console.error("Notion Error:", error);
-        alert("送信に失敗しました");
+        throw new Error("送信失敗");
       }
-    } catch (err) {
-      console.error(err);
-      alert("通信エラーが発生しました");
+    } catch (e) {
+      Alert.alert("エラー", "送信に失敗しました");
+    } finally {
+      setIsSending(false);
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
-      <TextInput
-        autoFocus
-        style={styles.input}
-        placeholder="ここにメモを入力..."
-        placeholderTextColor="#9B9B9B"
-        value={text}
-        onChangeText={setText}
-      />
-      <Button title={`${buttonTitle}に追加`} onPress={handleSend} />
+      <Text style={styles.title}>Notion Quick Memo</Text>
+
+      {/* 入力エリア */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="メモを入力..."
+          placeholderTextColor="#888"
+          value={memoText}
+          onChangeText={setMemoText}
+          multiline
+        />
+        <TouchableOpacity
+          style={[styles.sendButton, isSending && { opacity: 0.5 }]}
+          onPress={handleSendMemo}
+          disabled={isSending}
+        >
+          {isSending ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text style={styles.sendButtonText}>送信</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.subTitle}>送信先ページを選択:</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#FFEE58" />
+      ) : (
+        <FlatList
+          data={pages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.pageItem,
+                selectedPageId === item.id && styles.selectedPage,
+              ]}
+              onPress={() => setSelectedPageId(item.id)}
+            >
+              <Text
+                style={[
+                  styles.pageText,
+                  selectedPageId === item.id && styles.selectedPageText,
+                ]}
+              >
+                {item.properties?.title?.title[0]?.plain_text || "無題のページ"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: "center" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E9E9E8",
-    padding: 15,
-    marginBottom: 20,
-    borderRadius: 10,
+  container: {
+    flex: 1,
+    backgroundColor: "#121212",
+    padding: 20,
+    paddingTop: 60,
   },
+  title: {
+    color: "#FFEE58",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  subTitle: { color: "#fff", fontSize: 16, marginTop: 20, marginBottom: 10 },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: "#222",
+    color: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    fontSize: 16,
+    minHeight: 80,
+  },
+  sendButton: {
+    backgroundColor: "#FFEE58",
+    padding: 15,
+    borderRadius: 10,
+    marginLeft: 10,
+    height: 55,
+    justifyContent: "center",
+  },
+  sendButtonText: { fontWeight: "bold", fontSize: 16 },
+  pageItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: "#333" },
+  selectedPage: { backgroundColor: "#333", borderRadius: 10 },
+  pageText: { color: "#aaa" },
+  selectedPageText: { color: "#FFEE58", fontWeight: "bold" },
 });
