@@ -96,6 +96,18 @@ export default function Home() {
     }
   };
 
+  const handleNotionAuth = () => {
+    // TODO: Replace with your actual Client ID
+    const clientId = process.env.NOTION_OATH_ID;
+    const redirectUri =
+      "https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/callback";
+    const authUrl = `https://api.notion.com/v1/oauth/authorize?owner=user&client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri,
+    )}&response_type=code`;
+
+    Linking.openURL(authUrl);
+  };
+
   useEffect(() => {
     fetchBlocks();
   }, []);
@@ -112,6 +124,12 @@ export default function Home() {
         }
       >
         <View style={{ padding: 20, paddingBottom: 150 }}>
+          <Button
+            title="Notionと連携する"
+            onPress={handleNotionAuth}
+            color="#000"
+          />
+          <View style={{ height: 20 }} />
           <Button
             title="リセット（削除テスト）"
             color="#D32F2F"
