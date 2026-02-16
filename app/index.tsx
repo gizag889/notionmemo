@@ -1,7 +1,7 @@
-import { BlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,12 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from "react-native-reanimated";
+import { GestureDetector } from "react-native-gesture-handler";
+import Animated from "react-native-reanimated";
 import { SvgWidget } from "../components/SvgWidget";
+import { useDraggable } from "../hooks/useDraggable";
 import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
 import { deleteAuthData, getAuthData } from "../utils/storage";
 
@@ -36,64 +34,30 @@ const REFRESH_ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#E6E6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
 `;
 
-
 export default function Home() {
   const router = useRouter();
-  const [blocks, setBlocks] = useState<BlockObjectResponse[]>([]);
-  const [pageTitle, setPageTitle] = useState<string>("私のNotionページ");
-  const [pageId, setPageId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
   const scrollViewRef = useRef<ScrollView>(null);
+  const queryClient = useQueryClient();
 
   // Floating controller state
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const startX = useSharedValue(0);
-  const startY = useSharedValue(0);
+  const { pan, animatedStyle } = useDraggable();
 
-  const pan = Gesture.Pan()
-    .onStart(() => {
-      startX.value = translateX.value;
-      startY.value = translateY.value;
-    })
-    .onUpdate((event) => {
-      translateX.value = startX.value + event.translationX;
-      translateY.value = startY.value + event.translationY;
-    });
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-      ],
-    };
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["notionBlocks"],
+    queryFn: async () => {
+      const userId = await getAuthData();
+      if (!userId) {
+        return null;
+      }
+      return fetchUserBlocks(userId);
+    },
   });
 
-  const fetchBlocks = async () => {
-    setLoading(true);
-    const userId = await getAuthData();
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { title, content, pageId } = await fetchUserBlocks(userId);
-      setBlocks(content);
-      setPageTitle(title);
-      setPageId(pageId);
-    } catch (error) {
-      console.error("Fetch Error:", error);
-      alert("通信エラーが発生しました");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCopy = async () => {
-    if (blocks.length > 0) {
-      const text = blocks.map((block) => getTextFromBlock(block)).join("\n");
+    if (data && data.content.length > 0) {
+      const text = data.content
+        .map((block) => getTextFromBlock(block))
+        .join("\n");
       // @ts-ignore
       await Clipboard.setStringAsync(text);
       Alert.alert("コピーしました", "クリップボードに保存しました。");
@@ -112,11 +76,29 @@ export default function Home() {
     Linking.openURL(authUrl);
   };
 
-  useEffect(() => {
-    fetchBlocks();
-  }, []);
+  if (isLoading) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
 
-  if (loading) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+  // User is not logged in
+  if (!data) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#121212",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Button
+          title="Notionと連携する"
+          onPress={handleNotionAuth}
+          color="#fff"
+        />
+      </View>
+    );
+  }
+
+  const { title: pageTitle, content: blocks, pageId } = data;
 
   return (
     <View style={{ flex: 1 }}>
@@ -141,6 +123,8 @@ export default function Home() {
               await deleteAuthData();
               const val = await getAuthData();
               alert("リセット結果 (nullなら成功): " + val);
+              // Invalidate query to update UI logic (show login button)
+              queryClient.invalidateQueries({ queryKey: ["notionBlocks"] });
             }}
           />
 
@@ -155,7 +139,7 @@ export default function Home() {
           >
             <Text style={styles.title}>{pageTitle}</Text>
           </TouchableOpacity>
-          <Button title="更新" onPress={fetchBlocks} />
+          <Button title="更新" onPress={() => refetch()} />
 
           <View style={styles.card}>
             {blocks.length > 0 ? (
@@ -186,7 +170,12 @@ export default function Home() {
         {/* Scroll To Top */}
         <View style={styles.scrollTopButton}>
           <TouchableOpacity
-            style={{ height: 60, width: 60, justifyContent: "center", alignItems: "center" }}
+            style={{
+              height: 60,
+              width: 60,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
             onPress={() => {
               scrollViewRef.current?.scrollTo({ y: 0, animated: true });
             }}
@@ -213,6 +202,18 @@ export default function Home() {
           onPress={() => router.push("/quick-input")}
         >
           <Text style={styles.fabText}>＋</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => refetch()}
+        >
+          <SvgWidget
+            svg={REFRESH_ICON_SVG}
+            width={24}
+            height={24}
+            color="#fff"
+          />
         </TouchableOpacity>
 
         {/* Drag Handle */}

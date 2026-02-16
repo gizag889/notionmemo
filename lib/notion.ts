@@ -14,7 +14,7 @@ export const getTextFromBlock = (block: BlockObjectResponse): string => {
 
 // 1. Get pages to find the first one (simulating the logic that was on backend)
 // We use the existing /get-pages endpoint which calls v1/search
-const resolveUserPage = async (
+export const resolveUserPage = async (
   userId: string,
 ): Promise<{ title: string; pageId: string }> => {
   const pagesResponse = await fetch(

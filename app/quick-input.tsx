@@ -1,68 +1,41 @@
 // app/index.tsx
-import { useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { resolveUserPage } from "../lib/notion";
 import { getAuthData } from "../utils/storage";
 
-interface NotionPage {
-  id: string;
-  properties: {
-    title?: {
-      title: { plain_text: string }[];
-    };
-    [key: string]: any;
-  };
-}
+
 
 export default function Home() {
-  const [pages, setPages] = useState<NotionPage[]>([]);
-  const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [pageTitle, setPageTitle] = useState<string>("");
 
   // 入力用ステート
   const [memoText, setMemoText] = useState("");
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
-  // ページ一覧取得
-  useFocusEffect(
-    useCallback(() => {
-      async function init() {
-        const id = await getAuthData();
-        if (id) {
-          setUserId(id);
-          fetchPages(id);
-        }
+  // ページ情報取得
+  React.useEffect(() => {
+    async function init() {
+      const id = await getAuthData();
+      if (id) {
+        setUserId(id);
+        const { title, pageId } = await resolveUserPage(id);
+        setPageTitle(title);
+        setSelectedPageId(pageId);
       }
-      init();
-    }, []),
-  );
-
-  async function fetchPages(id: string) {
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `https://polished-grass-a069.gizaguri0426.workers.dev/get-pages?user_id=${id}`,
-      );
-      const data = await res.json();
-      setPages(data.results || []);
-      // 最初のページをデフォルトで選択
-      if (data.results?.length > 0) setSelectedPageId(data.results[0].id);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
     }
-  }
+    init();
+  }, []);
 
   // メモ送信処理
   async function handleSendMemo() {
@@ -101,8 +74,6 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Notion Quick Memo</Text>
-
       {/* 入力エリア */}
       <View style={styles.inputContainer}>
         <TextInput
@@ -113,6 +84,8 @@ export default function Home() {
           onChangeText={setMemoText}
           multiline
         />
+      </View>
+      <View>
         <TouchableOpacity
           style={[styles.sendButton, isSending && { opacity: 0.5 }]}
           onPress={handleSendMemo}
@@ -121,38 +94,12 @@ export default function Home() {
           {isSending ? (
             <ActivityIndicator color="#000" />
           ) : (
-            <Text style={styles.sendButtonText}>送信</Text>
+            <Text style={styles.sendButtonText}>
+              {pageTitle || "読み込み中..."}に送信
+            </Text>
           )}
         </TouchableOpacity>
       </View>
-
-      <Text style={styles.subTitle}>送信先ページを選択:</Text>
-      {loading ? (
-        <ActivityIndicator size="large" color="#FFEE58" />
-      ) : (
-        <FlatList
-          data={pages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.pageItem,
-                selectedPageId === item.id && styles.selectedPage,
-              ]}
-              onPress={() => setSelectedPageId(item.id)}
-            >
-              <Text
-                style={[
-                  styles.pageText,
-                  selectedPageId === item.id && styles.selectedPageText,
-                ]}
-              >
-                {item.properties?.title?.title[0]?.plain_text || "無題のページ"}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      )}
     </View>
   );
 }
@@ -186,12 +133,13 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   sendButton: {
-    backgroundColor: "#FFEE58",
+    backgroundColor: "#FFFFFF",
     padding: 15,
     borderRadius: 10,
     marginLeft: 10,
     height: 55,
     justifyContent: "center",
+    alignItems: "center",
   },
   sendButtonText: { fontWeight: "bold", fontSize: 16 },
   pageItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: "#333" },
