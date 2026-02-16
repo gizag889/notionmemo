@@ -63,19 +63,6 @@ export default Sentry.wrap(function Layout() {
               ),
             }}
           />
-          <Stack.Screen
-            name="quick-input"
-            options={{
-              presentation: "modal",
-              title: "クイック追加",
-            }}
-          />
-          <Stack.Screen
-            name="help"
-            options={{
-              title: "ヘルプ",
-            }}
-          />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>
