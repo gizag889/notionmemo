@@ -161,9 +161,7 @@ app.get('/get-pages', async (c) => {
 	return c.json(data);
 });
 
-// polished-grass-a069/src/index.ts
 
-// ... (既存の /get-pages の下あたりに追加)
 
 app.post('/add-memo', async (c) => {
 	const { user_id, content, page_id } = await c.req.json();

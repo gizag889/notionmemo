@@ -22,6 +22,12 @@ export const updateWidgetContent = async (data: {
 
   requestWidgetUpdate({
     widgetName: "NotionClipboardWidget",
-    renderWidget: () => <WidgetView title={data.title} items={simpleContent} />,
+    renderWidget: () => (
+      <WidgetView
+        title={data.title}
+        items={simpleContent}
+        pageId={data.pageId}
+      />
+    ),
   });
 };

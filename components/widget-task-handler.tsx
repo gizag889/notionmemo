@@ -16,8 +16,14 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
   switch (widgetAction) {
     case "WIDGET_UPDATE":
     case "WIDGET_ADDED":
-      const { title, items } = await loadWidgetData();
-      renderWidget(<WidgetView title={title} items={items} />);
+      const { title, items, pageId: loadedPageId } = await loadWidgetData();
+      renderWidget(
+        <WidgetView
+          title={title}
+          items={items}
+          pageId={loadedPageId || undefined}
+        />,
+      );
       break;
     case "WIDGET_CLICK":
       if (clickAction === "OPEN_MAIN") {
@@ -37,6 +43,9 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
             title={currentTitle}
             items={currentItems}
             isLoading={true}
+            pageId={
+              currentItems && currentItems.length > 0 ? undefined : undefined
+            } // We might not have pageId easily available here without loading it again, but usually it's fine.
           />,
         );
 
@@ -59,14 +68,35 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         );
 
         // ローディング完了（isLoading=false）で描画
-        renderWidget(<WidgetView title={data.title} items={simpleContent} />);
+        renderWidget(
+          <WidgetView
+            title={data.title}
+            items={simpleContent}
+            pageId={data.pageId}
+          />,
+        );
       }
-      if (clickAction === "OPEN_NOTION") {
-        const pageId =
+      if (
+        clickAction === "OPEN_NOTION" ||
+        (clickAction && clickAction.startsWith("OPEN_NOTION:"))
+      ) {
+        let pageIdStr =
           (await SecureStore.getItemAsync("latest_notion_page_id")) ||
           process.env.EXPO_PUBLIC_BLOCK_ID;
-        if (pageId) {
-          Linking.openURL(`https://www.notion.so/${pageId.replace(/-/g, "")}`);
+
+        // Extract pageId from clickAction if available
+        if (
+          clickAction &&
+          clickAction.startsWith("OPEN_NOTION:") &&
+          clickAction.length > 12
+        ) {
+          pageIdStr = clickAction.split(":")[1];
+        }
+
+        if (pageIdStr) {
+          Linking.openURL(
+            `https://www.notion.so/${pageIdStr.replace(/-/g, "")}`,
+          );
         }
       }
       // if (clickAction === "COPY") {
