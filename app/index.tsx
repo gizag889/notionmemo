@@ -78,13 +78,13 @@ export default function Home() {
   };
 
   const handleNotionAuth = () => {
-    // TODO: Replace with your actual Client ID
-    const clientId = process.env.NOTION_OATH_ID;
-    const redirectUri =
-      "https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/callback";
-    const authUrl = `https://api.notion.com/v1/oauth/authorize?owner=user&client_id=${clientId}&redirect_uri=${encodeURIComponent(
-      redirectUri,
-    )}&response_type=code`;
+
+    const authUrl = process.env.AUTH_URL;
+
+    if (!authUrl) {
+      Alert.alert("Error", "AUTH_URL is missing");
+      return;
+    }
 
     Linking.openURL(authUrl);
   };
@@ -95,31 +95,25 @@ export default function Home() {
   if (!data) {
     return (
       <View>
-      <View
-        style={{
-          paddingTop: 100,
-          flex: 1,
-          backgroundColor: "#121212",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Button
-          title="Notionと連携する"
-          onPress={handleNotionAuth}
-          color="#222222"
-        />
-        
+        <View
+          style={{
+            paddingTop: 100,
+            flex: 1,
+            backgroundColor: "#121212",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Button
+            title="Notionと連携する"
+            onPress={handleNotionAuth}
+            color="#222222"
+          />
+        </View>
+        <View>
+          <Button title="更新" onPress={() => refetch()} color="#222222" />
+        </View>
       </View>
-      <View>
-        <Button
-          title="更新"
-          onPress={() => refetch()}
-          color="#222222"
-        />
-      </View>
-      </View>
-      
     );
   }
 
@@ -135,14 +129,10 @@ export default function Home() {
         }
       >
         <View style={{ padding: 20, paddingBottom: 100 }}>
-          <View
-            style={{
-              
-            }}
-          >
+          <View style={{}}>
             <TouchableOpacity
               onPress={handleNotionAuth}
-              style={[styles.actionButton, {backgroundColor: "#1E88E5"}]}
+              style={[styles.actionButton, { backgroundColor: "#1E88E5" }]}
             >
               <SvgWidget
                 svg={LINK_ICON_SVG}
@@ -376,5 +366,4 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 10,
   },
-
 });
