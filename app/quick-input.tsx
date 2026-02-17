@@ -1,4 +1,4 @@
-// app/index.tsx
+import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -12,34 +12,25 @@ import {
 import { resolveUserPage } from "../lib/notion";
 import { getAuthData } from "../utils/storage";
 
-
-
 export default function Home() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [pageTitle, setPageTitle] = useState<string>("");
-
   // 入力用ステート
   const [memoText, setMemoText] = useState("");
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
   // ページ情報取得
-  React.useEffect(() => {
-    async function init() {
+  const { data: pageInfo, isLoading } = useQuery({
+    queryKey: ["notionPageInfo"],
+    queryFn: async () => {
       const id = await getAuthData();
-      if (id) {
-        setUserId(id);
-        const { title, pageId } = await resolveUserPage(id);
-        setPageTitle(title);
-        setSelectedPageId(pageId);
-      }
-    }
-    init();
-  }, []);
+      if (!id) return null;
+      const { title, pageId } = await resolveUserPage(id);
+      return { userId: id, title, pageId };
+    },
+  });
 
   // メモ送信処理
   async function handleSendMemo() {
-    if (!memoText || !selectedPageId || !userId) {
+    if (!memoText || !pageInfo?.pageId || !pageInfo?.userId) {
       Alert.alert("エラー", "メモを入力し、ページを選択してください");
       return;
     }
@@ -52,8 +43,8 @@ export default function Home() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_id: userId,
-            page_id: selectedPageId,
+            user_id: pageInfo.userId,
+            page_id: pageInfo.pageId,
             content: memoText,
           }),
         },
@@ -95,7 +86,7 @@ export default function Home() {
             <ActivityIndicator color="#000" />
           ) : (
             <Text style={styles.sendButtonText}>
-              {pageTitle || "読み込み中..."}に送信
+              {pageInfo?.title || "読み込み中..."}に送信
             </Text>
           )}
         </TouchableOpacity>
