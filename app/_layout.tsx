@@ -1,12 +1,13 @@
+import * as Sentry from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Circle, Path, Svg } from "react-native-svg";
-import * as Sentry from '@sentry/react-native';
+import Toast from "react-native-toast-message";
 
 Sentry.init({
-  dsn: 'https://3492d30d9429bc3d3d9f571a23cf368e@o4510860481855488.ingest.us.sentry.io/4510860506300416',
+  dsn: "https://3492d30d9429bc3d3d9f571a23cf368e@o4510860481855488.ingest.us.sentry.io/4510860506300416",
 
   // Adds more context data to events (IP address, cookies, user, etc.)
   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
@@ -18,7 +19,10 @@ Sentry.init({
   // Configure Session Replay
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+  integrations: [
+    Sentry.mobileReplayIntegration(),
+    Sentry.feedbackIntegration(),
+  ],
 
   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
   // spotlight: __DEV__,
@@ -65,6 +69,7 @@ export default Sentry.wrap(function Layout() {
           />
         </Stack>
       </QueryClientProvider>
+      <Toast />
     </GestureHandlerRootView>
   );
 });

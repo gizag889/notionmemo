@@ -2,13 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { resolveUserPage } from "../lib/notion";
 import { getAuthData } from "../utils/storage";
 
@@ -31,7 +31,11 @@ export default function Home() {
   // メモ送信処理
   async function handleSendMemo() {
     if (!memoText || !pageInfo?.pageId || !pageInfo?.userId) {
-      Alert.alert("エラー", "メモを入力し、ページを選択してください");
+      Toast.show({
+        type: "error",
+        text1: "エラー",
+        text2: "メモを入力し、ページを選択してください",
+      });
       return;
     }
 
@@ -51,13 +55,21 @@ export default function Home() {
       );
 
       if (res.ok) {
-        Alert.alert("成功", "Notionにメモを追記しました！");
+        Toast.show({
+          type: "success",
+          text1: "成功",
+          text2: "Notionにメモを追記しました！",
+        });
         setMemoText(""); // 入力欄をクリア
       } else {
         throw new Error("送信失敗");
       }
     } catch (e) {
-      Alert.alert("エラー", "送信に失敗しました");
+      Toast.show({
+        type: "error",
+        text1: "エラー",
+        text2: "送信に失敗しました",
+      });
     } finally {
       setIsSending(false);
     }
