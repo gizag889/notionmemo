@@ -5,7 +5,11 @@ import { Linking } from "react-native";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
 import { WidgetView } from "../components/WidgetView";
 import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
-import { loadWidgetData, saveWidgetData } from "../lib/widget-storage";
+import {
+  loadWidgetData,
+  saveWidgetData,
+  saveWidgetTheme,
+} from "../lib/widget-storage";
 import { getAuthData } from "../utils/storage";
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
@@ -16,12 +20,18 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
   switch (widgetAction) {
     case "WIDGET_UPDATE":
     case "WIDGET_ADDED":
-      const { title, items, pageId: loadedPageId } = await loadWidgetData();
+      const {
+        title,
+        items,
+        pageId: loadedPageId,
+        theme,
+      } = await loadWidgetData();
       renderWidget(
         <WidgetView
           title={title}
           items={items}
           pageId={loadedPageId || undefined}
+          theme={theme}
         />,
       );
       break;
@@ -32,10 +42,33 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
       if (clickAction === "OPEN_INPUT") {
         Linking.openURL("notionmemo://quick-input");
       }
+      if (clickAction === "TOGGLE_THEME") {
+        const {
+          title: currentTitle,
+          items: currentItems,
+          pageId: currentPageId,
+          theme: currentTheme,
+        } = await loadWidgetData();
+
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        await saveWidgetTheme(newTheme);
+
+        renderWidget(
+          <WidgetView
+            title={currentTitle}
+            items={currentItems}
+            pageId={currentPageId || undefined}
+            theme={newTheme}
+          />,
+        );
+      }
       if (clickAction === "REFRESH") {
         // 現在のデータを取得して表示（ローディング状態）
-        const { title: currentTitle, items: currentItems } =
-          await loadWidgetData();
+        const {
+          title: currentTitle,
+          items: currentItems,
+          theme: currentTheme,
+        } = await loadWidgetData();
 
         // ローディング状態をtrueにして描画
         renderWidget(
@@ -46,13 +79,20 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
             pageId={
               currentItems && currentItems.length > 0 ? undefined : undefined
             } // We might not have pageId easily available here without loading it again, but usually it's fine.
+            theme={currentTheme}
           />,
         );
 
         // データ取得
         const userId = await getAuthData();
         if (!userId) {
-          renderWidget(<WidgetView title="Notion" items={["Please login"]} />);
+          renderWidget(
+            <WidgetView
+              title="Notion"
+              items={["Please login"]}
+              theme={currentTheme}
+            />,
+          );
           return;
         }
 
@@ -73,6 +113,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
             title={data.title}
             items={simpleContent}
             pageId={data.pageId}
+            theme={currentTheme}
           />,
         );
       }

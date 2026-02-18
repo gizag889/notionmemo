@@ -12,6 +12,7 @@ export type WidgetItem =
 const KEY_TEXT = "latest_notion_text";
 const KEY_TITLE = "latest_notion_title";
 const KEY_PAGE_ID = "latest_notion_page_id";
+const KEY_THEME = "widget_theme";
 
 export async function saveWidgetData(
   title: string,
@@ -28,14 +29,23 @@ export async function saveWidgetData(
   await SecureStore.setItemAsync(KEY_PAGE_ID, pageId);
 }
 
+export async function saveWidgetTheme(theme: "light" | "dark") {
+  await SecureStore.setItemAsync(KEY_THEME, theme);
+}
+
 export async function loadWidgetData(): Promise<{
   title: string;
   items: WidgetItem[];
   pageId: string | null;
+  theme: "light" | "dark";
 }> {
   const savedText = await SecureStore.getItemAsync(KEY_TEXT);
   const savedTitle = (await SecureStore.getItemAsync(KEY_TITLE)) || "Notion";
   const savedPageId = await SecureStore.getItemAsync(KEY_PAGE_ID);
+  const savedTheme = (await SecureStore.getItemAsync(KEY_THEME)) as
+    | "light"
+    | "dark"
+    | null;
 
   let items: WidgetItem[] = [];
 
@@ -60,5 +70,6 @@ export async function loadWidgetData(): Promise<{
     title: savedTitle,
     items,
     pageId: savedPageId,
+    theme: savedTheme || "dark",
   };
 }

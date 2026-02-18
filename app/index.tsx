@@ -79,7 +79,7 @@ export default function Home() {
 
   const handleNotionAuth = () => {
 
-    const authUrl = process.env.AUTH_URL;
+    const authUrl = process.env.EXPO_PUBLIC_AUTH_URL;
 
     if (!authUrl) {
       Alert.alert("Error", "AUTH_URL is missing");
