@@ -1,15 +1,11 @@
 "use no memo";
 import type { BlockObjectResponse } from "@notionhq/client/build/src/api-endpoints";
-import * as SecureStore from "expo-secure-store";
+import React from "react";
 import { Linking } from "react-native";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
 import { WidgetView } from "../components/WidgetView";
 import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
-import {
-  loadWidgetData,
-  saveWidgetData,
-  saveWidgetTheme,
-} from "../lib/widget-storage";
+import { getWidgetTheme, saveWidgetTheme } from "../lib/widget-storage";
 import { getAuthData } from "../utils/storage";
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
@@ -20,21 +16,9 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
   switch (widgetAction) {
     case "WIDGET_UPDATE":
     case "WIDGET_ADDED":
-      const {
-        title,
-        items,
-        pageId: loadedPageId,
-        theme,
-      } = await loadWidgetData();
-      renderWidget(
-        <WidgetView
-          title={title}
-          items={items}
-          pageId={loadedPageId || undefined}
-          theme={theme}
-        />,
-      );
+      await handleRefresh(renderWidget);
       break;
+
     case "WIDGET_CLICK":
       if (clickAction === "OPEN_MAIN") {
         Linking.openURL("notionmemo://");
@@ -43,94 +27,22 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         Linking.openURL("notionmemo://quick-input");
       }
       if (clickAction === "TOGGLE_THEME") {
-        const {
-          title: currentTitle,
-          items: currentItems,
-          pageId: currentPageId,
-          theme: currentTheme,
-        } = await loadWidgetData();
-
+        const currentTheme = await getWidgetTheme();
         const newTheme = currentTheme === "dark" ? "light" : "dark";
         await saveWidgetTheme(newTheme);
-
-        renderWidget(
-          <WidgetView
-            title={currentTitle}
-            items={currentItems}
-            pageId={currentPageId || undefined}
-            theme={newTheme}
-          />,
-        );
+        await handleRefresh(renderWidget);
       }
       if (clickAction === "REFRESH") {
-        // 現在のデータを取得して表示（ローディング状態）
-        const {
-          title: currentTitle,
-          items: currentItems,
-          theme: currentTheme,
-        } = await loadWidgetData();
-
-        // ローディング状態をtrueにして描画
-        renderWidget(
-          <WidgetView
-            title={currentTitle}
-            items={currentItems}
-            isLoading={true}
-            pageId={
-              currentItems && currentItems.length > 0 ? undefined : undefined
-            } // We might not have pageId easily available here without loading it again, but usually it's fine.
-            theme={currentTheme}
-          />,
-        );
-
-        // データ取得
-        const userId = await getAuthData();
-        if (!userId) {
-          renderWidget(
-            <WidgetView
-              title="Notion"
-              items={["Please login"]}
-              theme={currentTheme}
-            />,
-          );
-          return;
-        }
-
-        const data = await fetchUserBlocks(userId);
-
-        await saveWidgetData(data.title, data.content, data.pageId);
-
-        const simpleContent = data.content.map(
-          (block: BlockObjectResponse) => ({
-            type: block.type,
-            text: getTextFromBlock(block),
-          }),
-        );
-
-        // ローディング完了（isLoading=false）で描画
-        renderWidget(
-          <WidgetView
-            title={data.title}
-            items={simpleContent}
-            pageId={data.pageId}
-            theme={currentTheme}
-          />,
-        );
+        await handleRefresh(renderWidget);
       }
       if (
         clickAction === "OPEN_NOTION" ||
         (clickAction && clickAction.startsWith("OPEN_NOTION:"))
       ) {
-        let pageIdStr =
-          (await SecureStore.getItemAsync("latest_notion_page_id")) ||
-          process.env.EXPO_PUBLIC_BLOCK_ID;
+        let pageIdStr = "";
 
         // Extract pageId from clickAction if available
-        if (
-          clickAction &&
-          clickAction.startsWith("OPEN_NOTION:") &&
-          clickAction.length > 12
-        ) {
+        if (clickAction.startsWith("OPEN_NOTION:")) {
           pageIdStr = clickAction.split(":")[1];
         }
 
@@ -138,34 +50,62 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
           Linking.openURL(
             `https://www.notion.so/${pageIdStr.replace(/-/g, "")}`,
           );
+        } else {
+          Linking.openURL("https://www.notion.so/");
         }
       }
-      // if (clickAction === "COPY") {
-      //   const savedText = await SecureStore.getItemAsync("latest_notion_text");
-      //   if (savedText) {
-      //     try {
-      //       const parsed = JSON.parse(savedText);
-      //       let textToCopy = "";
-
-      //       if (Array.isArray(parsed)) {
-      //         textToCopy = parsed
-      //           .map((item) => (typeof item === "string" ? item : item.text))
-      //           .join("\n");
-      //       } else {
-      //         textToCopy = String(parsed);
-      //       }
-
-      //       if (textToCopy) {
-      //         await Clipboard.setStringAsync(textToCopy);
-      //       }
-      //     } catch (e) {
-      //       // Fallback for plain text legacy data
-      //       await Clipboard.setStringAsync(savedText);
-      //     }
-      //   }
-      // }
       break;
     default:
       break;
+  }
+}
+
+async function handleRefresh(
+  renderWidget: (widget: React.JSX.Element) => Promise<void> | void,
+) {
+  const theme = await getWidgetTheme();
+
+  // Show loading state or "Loading..." paragraph
+  // Note: If we just render loading state, it might flash.
+  // Ideally we would show cached data if we had it, but requirements say "without SecureStore".
+  // So we show a loading indicator or text.
+  await renderWidget(
+    <WidgetView title="Loading..." items={[]} isLoading={true} theme={theme} />,
+  );
+
+  const userId = await getAuthData();
+  if (!userId) {
+    await renderWidget(
+      <WidgetView title="Notion" items={["Please login"]} theme={theme} />,
+    );
+    return;
+  }
+
+  try {
+    const data = await fetchUserBlocks(userId);
+
+    const simpleContent = data.content.map((block: BlockObjectResponse) => ({
+      type: block.type,
+      text: getTextFromBlock(block),
+    }));
+
+    await renderWidget(
+      <WidgetView
+        title={data.title}
+        items={simpleContent}
+        pageId={data.pageId}
+        theme={theme}
+      />,
+    );
+  } catch (error) {
+    // In case of error (e.g. offline), show error message
+    // We could potentially show "Offline" or something.
+    await renderWidget(
+      <WidgetView
+        title="Error"
+        items={[{ type: "paragraph", text: "Failed to fetch data." }]}
+        theme={theme}
+      />,
+    );
   }
 }

@@ -18,6 +18,7 @@ export const resolveUserPage = async (
   userId: string,
 ): Promise<{ title: string; pageId: string }> => {
   const pagesResponse = await fetch(
+    //index.tsの/get-pagesを呼び出す
     `https://polished-grass-a069.gizaguri0426.workers.dev/get-pages?user_id=${userId}`,
   );
 

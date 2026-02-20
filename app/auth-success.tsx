@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 import { Text, View, ActivityIndicator } from 'react-native';
 import { saveAuthData } from '../utils/storage'; 
 
-//Notionの認証が完了すると、バックエンド（polished-grass-a069）からアプリのこのページ（auth-success）にリダイレクトされ
-
+//Notionの認証が完了すると、バックエンド（polished-grass-a069）からアプリのこのページ（auth-success）にリダイレクトされる
 export default function AuthSuccess() {
   const { user_id } = useLocalSearchParams();
   const router = useRouter();

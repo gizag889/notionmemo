@@ -5,6 +5,7 @@ import { getTextFromBlock } from "./notion";
 export type WidgetItem =
   | string
   | {
+      //Notionのblockが何のタイプのブロックか判別できるようにする
       type: BlockObjectResponse["type"];
       text: string;
     };
@@ -33,6 +34,14 @@ export async function saveWidgetTheme(theme: "light" | "dark") {
   await SecureStore.setItemAsync(KEY_THEME, theme);
 }
 
+export async function getWidgetTheme(): Promise<"light" | "dark"> {
+  const savedTheme = (await SecureStore.getItemAsync(KEY_THEME)) as
+    | "light"
+    | "dark"
+    | null;
+  return savedTheme || "dark";
+}
+
 export async function loadWidgetData(): Promise<{
   title: string;
   items: WidgetItem[];
@@ -42,10 +51,7 @@ export async function loadWidgetData(): Promise<{
   const savedText = await SecureStore.getItemAsync(KEY_TEXT);
   const savedTitle = (await SecureStore.getItemAsync(KEY_TITLE)) || "Notion";
   const savedPageId = await SecureStore.getItemAsync(KEY_PAGE_ID);
-  const savedTheme = (await SecureStore.getItemAsync(KEY_THEME)) as
-    | "light"
-    | "dark"
-    | null;
+  const theme = await getWidgetTheme();
 
   let items: WidgetItem[] = [];
 
@@ -70,6 +76,6 @@ export async function loadWidgetData(): Promise<{
     title: savedTitle,
     items,
     pageId: savedPageId,
-    theme: savedTheme || "dark",
+    theme,
   };
 }

@@ -6,6 +6,7 @@ export async function saveAuthData(userId: string) {
     console.error("saveAuthData に渡された値が空です");
     return;
   }
+  //MY_SECRET_USER_IDというキーでuserIdを保存
   await SecureStore.setItemAsync("MY_SECRET_USER_ID", userId);
 }
 
