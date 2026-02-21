@@ -74,12 +74,21 @@ export const fetchUserBlocks = async (
   if (!response.ok) {
     throw new Error("Failed to fetch blocks");
   }
-
   const data = await response.json();
-  const results = data.results as (
+
+  // Handle both array and object formats depending on the worker's response
+  const rawResults = Array.isArray(data) ? data : data.results;
+
+  if (!rawResults || !Array.isArray(rawResults)) {
+    console.error("Invalid data format received:", data);
+    return { title, content: [], pageId };
+  }
+
+  const results = rawResults as (
     | BlockObjectResponse
     | PartialBlockObjectResponse
   )[];
+
 
   // Filter for valid BlockObjectResponse
   const content = results.filter(

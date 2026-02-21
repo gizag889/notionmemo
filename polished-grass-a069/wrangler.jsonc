@@ -14,10 +14,12 @@
 		"nodejs_compat"
 	],
 	"d1_databases": [
+
 		{
-			"binding": "memo_app_db",
-			"database_name": "memo-app-db",
-			"database_id": "8e2eea57-293f-42db-a1aa-6f66bf85c172"
+			"binding": "notion_memo",
+			"database_name": "my-db",
+			"database_id": "c024c335-10c5-460a-b011-8fccada98745",
+			"remote": true
 		}
 	]
 	/**

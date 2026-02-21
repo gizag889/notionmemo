@@ -3,11 +3,12 @@ import { Hono } from 'hono';
 type Bindings = {
 	NOTION_CLIENT_ID: string;
 	NOTION_CLIENT_SECRET: string;
-	memo_app_db: D1Database; // D1のバインドを追加
+	notion_memo: D1Database; // D1のバインドを追加
 };
 
 type NotionTokenResponse = {
 	access_token: string;
+	refresh_token?: string;
 	token_type: string;
 	bot_id: string;
 	workspace_name: string;
@@ -29,6 +30,9 @@ type NotionTokenResponse = {
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+// キャッシュの有効期限（ミリ秒）例：5分
+const CACHE_TTL = 5 * 60 * 1000;
 
 //ユーザーがNotionの認証画面（「アクセスを許可しますか？」のような画面）で**「ページを選択」して許可ボタンを押した後**に実行
 app.get('/auth/notion/callback', async (c) => {
@@ -56,25 +60,28 @@ app.get('/auth/notion/callback', async (c) => {
 
 	const tokenData = (await response.json()) as NotionTokenResponse;
 
-	// ユーザーIDとアクセストークンの抽出
+	// ユーザーIDとアクセストークンなどの抽出
 	const notionUserId = tokenData.owner?.user?.id;
 	const accessToken = tokenData.access_token;
+	const refreshToken = tokenData.refresh_token;
 
 	if (notionUserId && accessToken) {
 		// D1 データベースに保存（既存の場合は更新）
-		await c.env.memo_app_db
+		await c.env.notion_memo
 			.prepare(
 				//VALUESの部分はstmt.bind(notionUserId, accessToken, workspaceName)のようになる
 				//ON CONFLICT:notion_user_id が UNIQUE制約 または PRIMARY KEY である前提。
+				//もし notion_user_id がすでに存在していた場合は、その行のaccess_tokenとworkspace_nameを更新する
 				`
-      INSERT INTO users (notion_user_id, access_token, workspace_name, updated_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO users (notion_user_id, access_token, workspace_name, refresh_token, updated_at)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(notion_user_id) DO UPDATE SET
         access_token = excluded.access_token,
+        refresh_token = excluded.refresh_token,
         updated_at = CURRENT_TIMESTAMP
     `,
 			)
-			.bind(notionUserId, accessToken, tokenData.workspace_name)
+			.bind(notionUserId, accessToken, tokenData.workspace_name, refreshToken || null)
 			.run();
 
 		// Androidアプリにリダイレクト（カスタムURLスキームを使用）
@@ -84,7 +91,7 @@ app.get('/auth/notion/callback', async (c) => {
 	return c.json({ error: 'Failed to obtain token' }, 400);
 });
 
-//そのページ内のブロック一覧を取得するエンドポイント
+//そのページ内のブロック一覧を取得するエンドポイント（SWRキャッシュ対応）
 app.get('/get-blocks', async (c) => {
 	const userId = c.req.query('user_id');
 	const pageId = c.req.query('page_id');
@@ -92,31 +99,101 @@ app.get('/get-blocks', async (c) => {
 	if (!userId) return c.json({ error: 'User ID is required' }, 400);
 	if (!pageId) return c.json({ error: 'Page ID is required' }, 400);
 
-	// 1. D1からアクセストークンを取得
-	const user = await c.env.memo_app_db
-		.prepare('SELECT access_token FROM users WHERE notion_user_id = ?')
-		.bind(userId)
-		.first<{ access_token: string }>();
+	// 1. D1から現在のキャッシュを取得
+	const cacheRecord = await c.env.notion_memo.prepare('SELECT * FROM page_caches WHERE page_id = ?').bind(pageId).first<{
+		page_id: string;
+		user_id: string;
+		title: string | null;
+		content_json: string;
+		last_fetched_at: string;
+		is_dirty: number;
+	}>();
 
-	if (!user) return c.json({ error: 'User not found' }, 404);
+	// Notionから最新データを取得してD1を更新する非同期関数
+	const fetchAndUpdateNotionData = async () => {
+		try {
+			// D1からアクセストークンを取得
+			const user = await c.env.notion_memo
+				.prepare('SELECT access_token FROM users WHERE notion_user_id = ?')
+				.bind(userId)
+				.first<{ access_token: string }>();
 
-	// 3. ブロック一覧を取得
-	const response = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
-		headers: {
-			Authorization: `Bearer ${user.access_token}`,
-			'Notion-Version': '2022-06-28',
-		},
-	});
+			if (!user) {
+				console.error('User not found for background update');
+				return;
+			}
 
-	if (!response.ok) {
-		return c.json({ error: 'Network response was not ok' }, 500);
+			// Notion APIから最新のブロック一覧を取得
+			const response = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
+				headers: {
+					Authorization: `Bearer ${user.access_token}`,
+					'Notion-Version': '2022-06-28',
+				},
+			});
+
+			if (!response.ok) {
+				console.error('Failed to fetch from Notion:', await response.text());
+				return;
+			}
+
+			const data = (await response.json()) as any;
+			const contentJson = JSON.stringify({ results: data.results });
+
+			// D1のキャッシュを上書き更新
+			await c.env.notion_memo
+				.prepare(
+					`
+					INSERT INTO page_caches (page_id, user_id, content_json, last_fetched_at, is_dirty)
+					VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0)
+					ON CONFLICT(page_id) DO UPDATE SET 
+						user_id = excluded.user_id,
+						content_json = excluded.content_json,
+						last_fetched_at = CURRENT_TIMESTAMP
+				`,
+				)
+				.bind(pageId, userId, contentJson)
+				.run();
+
+			console.log(`[Cache Updated] Page: ${pageId}`);
+		} catch (error) {
+			console.error('Notion APIの取得またはD1の更新に失敗しました:', error);
+		}
+	};
+
+	// 2. キャッシュが存在しない場合 (初回リクエスト)
+	if (!cacheRecord) {
+		await fetchAndUpdateNotionData();
+
+		// 更新されたばかりのデータを再度D1から取得して返す
+		const newCache = await c.env.notion_memo
+			.prepare('SELECT content_json FROM page_caches WHERE page_id = ?')
+			.bind(pageId)
+			.first<{ content_json: string }>();
+
+		if (!newCache) {
+			return c.json({ error: 'Failed to fetch blocks' }, 500);
+		}
+
+		return c.json(JSON.parse(newCache.content_json));
 	}
 
-	const data = (await response.json()) as any;
-	// タイトルを含めて返す (タイトルはクライアント側で取得済みなので、ここでは空文字または省略可だが、互換性のためにキーだけ残すか、シンプルにresultsだけ返す)
-	// クライアントは title を /get-pages の結果から使っているので、ここは results だけ返せば本来十分。
-	// ただし lib/notion.ts の実装では title は /get-pages から取っているので、ここの title は無視されるはず。
-	return c.json({ results: data.results });
+	// 3. キャッシュが存在する場合 (鮮度チェック)
+	// SQLiteのCURRENT_TIMESTAMPで入った値をUTCとしてJSでパース
+	const timeString = cacheRecord.last_fetched_at.replace(' ', 'T') + 'Z';
+	const lastFetchedAt = new Date(timeString).getTime();
+
+	// パースエラー時（NaN）対策として、念のため代替処理
+	const reliableLastFetchedAt = isNaN(lastFetchedAt) ? new Date(cacheRecord.last_fetched_at).getTime() : lastFetchedAt;
+
+	const isStale = Date.now() - reliableLastFetchedAt > CACHE_TTL;
+
+	if (isStale) {
+		// キャッシュが古い場合、クライアントを待たせずに裏側で更新処理を走らせる
+		c.executionCtx.waitUntil(fetchAndUpdateNotionData());
+	}
+
+	// 新鮮な場合も、古い(Stale)場合も、とりあえず手元のキャッシュを返す
+	return c.json(JSON.parse(cacheRecord.content_json));
 });
 
 // ページ一覧を取得するエンドポイント（検索APIを使用）
@@ -126,7 +203,7 @@ app.get('/get-pages', async (c) => {
 	if (!userId) return c.json({ error: 'User ID is required' }, 400);
 
 	// 1. D1からアクセストークンを取得
-	const user = await c.env.memo_app_db
+	const user = await c.env.notion_memo
 		.prepare('SELECT access_token FROM users WHERE notion_user_id = ?')
 		.bind(userId)
 		.first<{ access_token: string }>();
@@ -161,8 +238,6 @@ app.get('/get-pages', async (c) => {
 	return c.json(data);
 });
 
-
-
 app.post('/add-memo', async (c) => {
 	const { user_id, content, page_id } = await c.req.json();
 
@@ -171,7 +246,7 @@ app.post('/add-memo', async (c) => {
 	}
 
 	// 1. D1から最新のアクセストークンを取得
-	const user = await c.env.memo_app_db
+	const user = await c.env.notion_memo
 		.prepare('SELECT access_token FROM users WHERE notion_user_id = ?')
 		.bind(user_id)
 		.first<{ access_token: string }>();
@@ -210,6 +285,9 @@ app.post('/add-memo', async (c) => {
 	if (!notionResponse.ok) {
 		return c.json({ error: 'Notionへの書き込みに失敗しました', details: result }, 500);
 	}
+
+	// キャッシュを削除（次回取得時にNotionから最新データを取り直すようにする）
+	await c.env.notion_memo.prepare('DELETE FROM page_caches WHERE page_id = ?').bind(page_id).run();
 
 	return c.json({ message: '成功！', data: result });
 });

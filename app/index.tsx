@@ -79,6 +79,7 @@ export default function Home() {
 
   const handleNotionAuth = () => {
 
+
     const authUrl = process.env.EXPO_PUBLIC_AUTH_URL;
 
     if (!authUrl) {
