@@ -78,15 +78,9 @@ export default function Home() {
   };
 
   const handleNotionAuth = () => {
-
-
-    const authUrl = process.env.EXPO_PUBLIC_AUTH_URL;
-
-    if (!authUrl) {
-      Alert.alert("Error", "AUTH_URL is missing");
-      return;
-    }
-
+    // 新しいWorkerのエンドポイントにリダイレクトし、サーバー側でstateを生成してNotionへ送る
+    const authUrl =
+      "https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/login";
     Linking.openURL(authUrl);
   };
 

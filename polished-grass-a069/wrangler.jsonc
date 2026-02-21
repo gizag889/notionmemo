@@ -14,12 +14,10 @@
 		"nodejs_compat"
 	],
 	"d1_databases": [
-
 		{
 			"binding": "notion_memo",
 			"database_name": "my-db",
-			"database_id": "c024c335-10c5-460a-b011-8fccada98745",
-			"remote": true
+			"database_id": "c024c335-10c5-460a-b011-8fccada98745"
 		}
 	]
 	/**

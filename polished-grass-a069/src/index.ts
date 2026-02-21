@@ -34,13 +34,40 @@ const app = new Hono<{ Bindings: Bindings }>();
 // キャッシュの有効期限（ミリ秒）例：5分
 const CACHE_TTL = 5 * 60 * 1000;
 
+// Notion連携を開始するエンドポイント
+app.get('/auth/notion/login', async (c) => {
+	const clientId = c.env.NOTION_CLIENT_ID;
+	const redirectUri = 'https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/callback';
+	const state = crypto.randomUUID();
+
+	// 状態をD1に保存（現在時刻のミリ秒も保存）
+	await c.env.notion_memo.prepare('INSERT INTO oauth_states (state, created_at) VALUES (?, ?)').bind(state, Date.now()).run();
+
+	const authUrl = `https://api.notion.com/v1/oauth/authorize?owner=user&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+	return c.redirect(authUrl);
+});
+
 //ユーザーがNotionの認証画面（「アクセスを許可しますか？」のような画面）で**「ページを選択」して許可ボタンを押した後**に実行
 app.get('/auth/notion/callback', async (c) => {
 	const clientId = c.env.NOTION_CLIENT_ID;
 	const clientSecret = c.env.NOTION_CLIENT_SECRET;
 	const code = c.req.query('code');
+	const state = c.req.query('state');
 
 	if (!code) return c.text('Authorization code not found', 400);
+	if (!state) return c.text('State parameter is missing', 400);
+
+	// stateの検証と削除
+	const stateResult = await c.env.notion_memo
+		.prepare('SELECT state FROM oauth_states WHERE state = ?')
+		.bind(state)
+		.first<{ state: string }>();
+
+	if (!stateResult) {
+		return c.text('Invalid or expired state parameter', 400);
+	}
+
+	await c.env.notion_memo.prepare('DELETE FROM oauth_states WHERE state = ?').bind(state).run();
 
 	// Notion API へトークン交換のリクエスト
 	const response = await fetch('https://api.notion.com/v1/oauth/token', {
@@ -292,4 +319,11 @@ app.post('/add-memo', async (c) => {
 	return c.json({ message: '成功！', data: result });
 });
 
-export default app;
+export default {
+	fetch: app.fetch,
+	async scheduled(event: any, env: Bindings, ctx: ExecutionContext) {
+		// 10分前（600,000ミリ秒）以前のstateを削除
+		const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+		ctx.waitUntil(env.notion_memo.prepare('DELETE FROM oauth_states WHERE created_at < ?').bind(tenMinutesAgo).run());
+	},
+};
