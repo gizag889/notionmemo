@@ -31,7 +31,7 @@ const COPY_ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
 `;
 const REFRESH_ICON_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#E6E6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E6E6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
 `;
 const PENCIL_ICON_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#E6E6E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
@@ -89,25 +89,37 @@ export default function Home() {
   // User is not logged in
   if (!data) {
     return (
-      <View>
-        <View
-          style={{
-            paddingTop: 100,
-            flex: 1,
-            backgroundColor: "#121212",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Button
-            title="Notionと連携する"
+      <View style={{ flex: 1, backgroundColor: "#121212" }}>
+        <View style={{ marginTop: 100 }} />
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.customButton}
             onPress={handleNotionAuth}
-            color="#222222"
-          />
+          >
+            <SvgWidget
+              svg={LINK_ICON_SVG}
+              width={22}
+              height={22}
+              color="#fff"
+            />
+            <Text style={styles.customButtonText}>Notionと連携する</Text>
+          </TouchableOpacity>
         </View>
-        <View>
-          <Button title="更新" onPress={() => refetch()} color="#222222" />
+        <View style={{ marginTop: 20 }} />
+         <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.customButton, { backgroundColor: "#222222" }]}
+           onPress={() => refetch()}          >
+            <SvgWidget
+              svg={REFRESH_ICON_SVG}
+              width={22}
+              height={22}
+              color="#fff"
+            />
+            <Text style={styles.customButtonText}>更新</Text>
+          </TouchableOpacity>
         </View>
+        
       </View>
     );
   }
@@ -274,6 +286,25 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#121212" },
   title: { color: "white", fontSize: 24, marginBottom: 20, marginTop: 20 },
+  buttonContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  customButton: {
+    backgroundColor: "#2986ff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+  },
+  customButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   card: {
     marginTop: 20,
     padding: 20,

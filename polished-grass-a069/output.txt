@@ -1,0 +1,37 @@
+﻿
+ 笵・ｸ・wrangler 4.64.0 (update available 4.67.0)
+笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+Resource location: remote 
+
+劇 Executing on remote database my-db (c024c335-10c5-460a-b011-8fccada98745):
+劇 To execute on your local development database, remove the --remote flag from your wrangler command.
+團 Executed 1 command in 0.21ms
+[
+  {
+    "results": [
+      {
+        "notion_user_id": "e74a37ed-6e3d-4852-8d57-9769b6def5fd",
+        "access_token": "ET4ymdQ42vljkX3iHWpsNzB6iXaVPBxWtUywaTMjGt/C724FTF72w7tAVBSUNszWGegQDhFlY0Q0TC9K2kA7DjPtCfYkchqMSvbiE8n4",
+        "workspace_name": "gogo's Notion"
+      }
+    ],
+    "success": true,
+    "meta": {
+      "served_by": "v3-prod",
+      "served_by_region": "APAC",
+      "served_by_colo": "NRT",
+      "served_by_primary": true,
+      "timings": {
+        "sql_duration_ms": 0.2116
+      },
+      "duration": 0.2116,
+      "changes": 0,
+      "last_row_id": 0,
+      "changed_db": false,
+      "size_after": 73728,
+      "rows_read": 1,
+      "rows_written": 0,
+      "total_attempts": 1
+    }
+  }
+]

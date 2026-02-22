@@ -1,8 +1,11 @@
 import { Hono } from 'hono';
+import { sign, verify } from 'hono/jwt';
 
 type Bindings = {
 	NOTION_CLIENT_ID: string;
 	NOTION_CLIENT_SECRET: string;
+	ENCRYPTION_KEY: string; // アクセストークンの暗号化用キー
+	JWT_SECRET: string; // JWT署名用キー
 	notion_memo: D1Database; // D1のバインドを追加
 };
 
@@ -33,6 +36,65 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 // キャッシュの有効期限（ミリ秒）例：5分
 const CACHE_TTL = 5 * 60 * 1000;
+
+// --- 暗号化・復号化ユーティリティ ---
+async function getEncryptionKey(secretKey: string): Promise<CryptoKey> {
+	//暗号化処理はテキストのままでは行えません。TextEncoder を使って、文字列を UTF-8 形式のバイト列（Uint8Array）に変換します
+	//暗号化キーを生成します。ここでは、入力された secretKey を元に、SHA-256 ハッシュを計算し、それを鍵の材料（keyMaterial）として使用しています。
+	const keyMaterial = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secretKey));
+	//ブラウザの暗号エンジンが安全に扱える CryptoKey オブジェクトに変換します
+	return crypto.subtle.importKey('raw', keyMaterial, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+
+	// return crypto.subtle.importKey(
+	// 'raw',           // 入力形式：生のバイナリデータ
+	// keyMaterial,     // 鍵の材料（SHA-256の結果）
+	// { name: 'AES-GCM' }, // アルゴリズム：AES-GCMを指定
+	// false,           // 抽出不可：この鍵を後からJavaScriptで取り出せないようにする（セキュリティ向上）
+	// ['encrypt', 'decrypt'] // 用途：暗号化と復号に使用することを許可
+}
+
+async function encryptData(data: string, secretKey: string): Promise<string> {
+	if (!secretKey) throw new Error('Encryption key is not set');
+	const key = await getEncryptionKey(secretKey);
+	//AES-GCM方式において、同じ鍵で複数のデータを暗号化しても、毎回結果が変わるようにするための「使い捨てのランダム値」
+	const iv = crypto.getRandomValues(new Uint8Array(12));
+	const encodedData = new TextEncoder().encode(data);
+	//暗号化の実行
+	const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encodedData);
+
+	// iv（12バイト）と ciphertext（暗号文の長さ）を足し合わせた、合計サイズ分の空のメモリ領域を確保
+	const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+	//確保したメモリ領域の先頭（0番目）から、iv の内容をコピー
+	combined.set(iv, 0);
+	// iv の直後の位置（iv.length）から、ciphertext の内容をコピー
+	combined.set(new Uint8Array(ciphertext), iv.length);
+
+	let binary = '';
+	for (let i = 0; i < combined.byteLength; i++) {
+		binary += String.fromCharCode(combined[i]);
+	}
+	//Binary（バイナリ）を ASCII（アスキー）形式(base64)に変換する
+	return btoa(binary);
+}
+
+async function decryptData(encryptedDataStr: string, secretKey: string): Promise<string> {
+	if (!secretKey) throw new Error('Encryption key is not set');
+	const key = await getEncryptionKey(secretKey);
+
+	const binaryString = atob(encryptedDataStr);
+	const combined = new Uint8Array(binaryString.length);
+	for (let i = 0; i < binaryString.length; i++) {
+		combined[i] = binaryString.charCodeAt(i);
+	}
+
+	const iv = combined.slice(0, 12);
+	const ciphertext = combined.slice(12);
+
+	const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+
+	return new TextDecoder().decode(decrypted);
+}
+// ------------------------------------
 
 // Notion連携を開始するエンドポイント
 app.get('/auth/notion/login', async (c) => {
@@ -89,10 +151,16 @@ app.get('/auth/notion/callback', async (c) => {
 
 	// ユーザーIDとアクセストークンなどの抽出
 	const notionUserId = tokenData.owner?.user?.id;
-	const accessToken = tokenData.access_token;
-	const refreshToken = tokenData.refresh_token;
+	let accessToken = tokenData.access_token;
+	let refreshToken = tokenData.refresh_token;
 
 	if (notionUserId && accessToken) {
+		// アクセストークン（とリフレッシュトークン）をAES-GCMで暗号化
+		accessToken = await encryptData(accessToken, c.env.ENCRYPTION_KEY);
+		if (refreshToken) {
+			refreshToken = await encryptData(refreshToken, c.env.ENCRYPTION_KEY);
+		}
+
 		// D1 データベースに保存（既存の場合は更新）
 		await c.env.notion_memo
 			.prepare(
@@ -112,10 +180,31 @@ app.get('/auth/notion/callback', async (c) => {
 			.run();
 
 		// Androidアプリにリダイレクト（カスタムURLスキームを使用）
-		return c.redirect(`notionmemo://auth-success?user_id=${notionUserId}`);
+		const token = await sign(
+			{
+				user_id: notionUserId,
+				exp: Math.floor(Date.now() / 1000) + 60 * 5, // 5 minutes expiration
+			},
+			c.env.JWT_SECRET,
+			'HS256',
+		);
+		return c.redirect(`notionmemo://auth-success?token=${token}`);
 	}
 
 	return c.json({ error: 'Failed to obtain token' }, 400);
+});
+
+// JWTを検証してユーザーIDを返すエンドポイント
+app.post('/auth/verify', async (c) => {
+	try {
+		const { token } = await c.req.json();
+		if (!token) return c.json({ error: 'Token is required' }, 400);
+
+		const payload = await verify(token, c.env.JWT_SECRET, 'HS256');
+		return c.json({ user_id: payload.user_id as string });
+	} catch (error) {
+		return c.json({ error: 'Invalid or expired token' }, 401);
+	}
 });
 
 //そのページ内のブロック一覧を取得するエンドポイント（SWRキャッシュ対応）
@@ -150,10 +239,13 @@ app.get('/get-blocks', async (c) => {
 				return;
 			}
 
+			// 暗号化されたアクセストークンを復号化
+			const accessToken = await decryptData(user.access_token, c.env.ENCRYPTION_KEY);
+
 			// Notion APIから最新のブロック一覧を取得
 			const response = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children`, {
 				headers: {
-					Authorization: `Bearer ${user.access_token}`,
+					Authorization: `Bearer ${accessToken}`,
 					'Notion-Version': '2022-06-28',
 				},
 			});
@@ -237,11 +329,14 @@ app.get('/get-pages', async (c) => {
 
 	if (!user) return c.json({ error: 'User not found' }, 404);
 
+	// 暗号化されたアクセストークンを復号化
+	const accessToken = await decryptData(user.access_token, c.env.ENCRYPTION_KEY);
+
 	// 2. Notion API (Search) を使用してページを検索
 	const response = await fetch('https://api.notion.com/v1/search', {
 		method: 'POST',
 		headers: {
-			Authorization: `Bearer ${user.access_token}`,
+			Authorization: `Bearer ${accessToken}`,
 			'Notion-Version': '2022-06-28',
 			'Content-Type': 'application/json',
 		},
@@ -280,12 +375,15 @@ app.post('/add-memo', async (c) => {
 
 	if (!user) return c.json({ error: 'ユーザーが見つかりません' }, 404);
 
+	// 暗号化されたアクセストークンを復号化
+	const accessToken = await decryptData(user.access_token, c.env.ENCRYPTION_KEY);
+
 	// 2. Notion API: 指定したページ（block_id）の末尾にテキストを追加
 	// PATCHメソッドを使用します
 	const notionResponse = await fetch(`https://api.notion.com/v1/blocks/${page_id}/children`, {
 		method: 'PATCH',
 		headers: {
-			Authorization: `Bearer ${user.access_token}`,
+			Authorization: `Bearer ${accessToken}`,
 			'Notion-Version': '2022-06-28',
 			'Content-Type': 'application/json',
 		},
