@@ -15,11 +15,14 @@ export const getTextFromBlock = (block: BlockObjectResponse): string => {
 // 1. Get pages to find the first one (simulating the logic that was on backend)
 // We use the existing /get-pages endpoint which calls v1/search
 export const resolveUserPage = async (
-  userId: string,
+  token: string,
 ): Promise<{ title: string; pageId: string }> => {
   const pagesResponse = await fetch(
     //index.tsの/get-pagesを呼び出す
-    `https://polished-grass-a069.gizaguri0426.workers.dev/get-pages?user_id=${userId}`,
+    `https://polished-grass-a069.gizaguri0426.workers.dev/get-pages`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
   );
 
   if (!pagesResponse.ok) {
@@ -51,24 +54,27 @@ export const resolveUserPage = async (
 };
 
 // Helper for quick-input.tsx to get just the title
-export const fetchPageTitle = async (userId: string): Promise<string> => {
-  const { title } = await resolveUserPage(userId);
+export const fetchPageTitle = async (token: string): Promise<string> => {
+  const { title } = await resolveUserPage(token);
   return title;
 };
 
 // Update return type to include title and pageId
 export const fetchUserBlocks = async (
-  userId: string,
+  token: string,
 ): Promise<{
   title: string;
   content: BlockObjectResponse[];
   pageId: string;
 }> => {
-  const { title, pageId } = await resolveUserPage(userId);
+  const { title, pageId } = await resolveUserPage(token);
 
   // 2. Fetch blocks for this specific page
   const response = await fetch(
-    `https://polished-grass-a069.gizaguri0426.workers.dev/get-blocks?user_id=${userId}&page_id=${pageId}`,
+    `https://polished-grass-a069.gizaguri0426.workers.dev/get-blocks?page_id=${pageId}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
   );
 
   if (!response.ok) {

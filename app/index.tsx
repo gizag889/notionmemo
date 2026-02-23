@@ -3,15 +3,14 @@ import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { useRef } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Button,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
@@ -58,11 +57,11 @@ export default function Home() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["notionBlocks"],
     queryFn: async () => {
-      const userId = await getAuthData();
-      if (!userId) {
+      const token = await getAuthData();
+      if (!token) {
         return null;
       }
-      return fetchUserBlocks(userId);
+      return fetchUserBlocks(token);
     },
   });
 
@@ -106,10 +105,11 @@ export default function Home() {
           </TouchableOpacity>
         </View>
         <View style={{ marginTop: 20 }} />
-         <View style={styles.buttonContainer}>
+        <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={[styles.customButton, { backgroundColor: "#222222" }]}
-           onPress={() => refetch()}          >
+            onPress={() => refetch()}
+          >
             <SvgWidget
               svg={REFRESH_ICON_SVG}
               width={22}
@@ -119,7 +119,6 @@ export default function Home() {
             <Text style={styles.customButtonText}>更新</Text>
           </TouchableOpacity>
         </View>
-        
       </View>
     );
   }

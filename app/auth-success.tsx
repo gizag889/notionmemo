@@ -7,6 +7,8 @@ import { saveAuthData } from "../utils/storage";
 //Notionの認証が完了すると、バックエンド（polished-grass-a069）からアプリのこのページ（auth-success）にリダイレクトされる
 export default function AuthSuccess() {
   const { user_id, token } = useLocalSearchParams();
+
+
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -14,26 +16,11 @@ export default function AuthSuccess() {
     async function handleLogin() {
       if (token && typeof token === "string") {
         try {
-          const res = await fetch(
-            "https://polished-grass-a069.gizaguri0426.workers.dev/auth/verify",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token }),
-            },
-          );
-          const data = await res.json();
-
-          if (res.ok && data.user_id) {
-            await saveAuthData(data.user_id);
-            router.replace("/");
-          } else {
-            console.error("JWT検証エラー:", data.error);
-            setErrorMsg("認証情報の検証に失敗しました");
-          }
+          await saveAuthData(token);
+          router.replace("/");
         } catch (error) {
-          console.error("ネットワークエラー:", error);
-          setErrorMsg("通信エラーが発生しました");
+          console.error("保存エラー:", error);
+          setErrorMsg("認証情報の保存に失敗しました");
         }
       } else if (user_id && typeof user_id === "string") {
         // 古いバージョン用（互換性確保用）

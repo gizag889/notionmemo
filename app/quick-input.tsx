@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { resolveUserPage } from "../lib/notion";
@@ -21,16 +21,16 @@ export default function Home() {
   const { data: pageInfo, isLoading } = useQuery({
     queryKey: ["notionPageInfo"],
     queryFn: async () => {
-      const id = await getAuthData();
-      if (!id) return null;
-      const { title, pageId } = await resolveUserPage(id);
-      return { userId: id, title, pageId };
+      const token = await getAuthData();
+      if (!token) return null;
+      const { title, pageId } = await resolveUserPage(token);
+      return { token, title, pageId };
     },
   });
 
   // メモ送信処理
   async function handleSendMemo() {
-    if (!memoText || !pageInfo?.pageId || !pageInfo?.userId) {
+    if (!memoText || !pageInfo?.pageId || !pageInfo?.token) {
       Toast.show({
         type: "error",
         text1: "エラー",
@@ -45,9 +45,11 @@ export default function Home() {
         "https://polished-grass-a069.gizaguri0426.workers.dev/add-memo",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${pageInfo.token}`,
+          },
           body: JSON.stringify({
-            user_id: pageInfo.userId,
             page_id: pageInfo.pageId,
             content: memoText,
           }),

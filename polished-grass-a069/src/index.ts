@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Context, Hono } from 'hono';
 import { sign, verify } from 'hono/jwt';
 
 type Bindings = {
@@ -113,6 +113,7 @@ app.get('/auth/notion/login', async (c) => {
 app.get('/auth/notion/callback', async (c) => {
 	const clientId = c.env.NOTION_CLIENT_ID;
 	const clientSecret = c.env.NOTION_CLIENT_SECRET;
+	//code stateはリンクのパラメータとして渡される
 	const code = c.req.query('code');
 	const state = c.req.query('state');
 
@@ -128,7 +129,7 @@ app.get('/auth/notion/callback', async (c) => {
 	if (!stateResult) {
 		return c.text('Invalid or expired state parameter', 400);
 	}
-
+	//stateを削除する処理を追加する
 	await c.env.notion_memo.prepare('DELETE FROM oauth_states WHERE state = ?').bind(state).run();
 
 	// Notion API へトークン交換のリクエスト
@@ -146,7 +147,7 @@ app.get('/auth/notion/callback', async (c) => {
 			redirect_uri: 'https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/callback',
 		}),
 	});
-
+	//レスポンスをjson形式で取得して、NotionTokenResponse型に変換する
 	const tokenData = (await response.json()) as NotionTokenResponse;
 
 	// ユーザーIDとアクセストークンなどの抽出
@@ -194,9 +195,11 @@ app.get('/auth/notion/callback', async (c) => {
 	return c.json({ error: 'Failed to obtain token' }, 400);
 });
 
+//auth-success.tsxで実行されるエンドポイント
 // JWTを検証してユーザーIDを返すエンドポイント
 app.post('/auth/verify', async (c) => {
 	try {
+		//tokenはbodyで渡される
 		const { token } = await c.req.json();
 		if (!token) return c.json({ error: 'Token is required' }, 400);
 
@@ -207,12 +210,27 @@ app.post('/auth/verify', async (c) => {
 	}
 });
 
+async function getUserIdFromContext(c: Context<{ Bindings: Bindings }>): Promise<string | null> {
+	const authHeader = c.req.header('Authorization');
+	if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+	//先頭に Bearer （末尾に半角スペース）が付くので、それを削除してトークンだけを取り出す
+	const token = authHeader.split(' ')[1];
+	try {
+		//verify 関数は現在時刻と照らし合わせて有効期限が切れていないかも自動的にチェックしてくれる
+		const payload = await verify(token, c.env.JWT_SECRET, 'HS256');
+		return payload.user_id as string;
+	} catch (e) {
+		return null;
+	}
+}
+
 //そのページ内のブロック一覧を取得するエンドポイント（SWRキャッシュ対応）
 app.get('/get-blocks', async (c) => {
-	const userId = c.req.query('user_id');
+	const userId = await getUserIdFromContext(c);
+	if (!userId) return c.json({ error: 'Unauthorized' }, 401);
+
 	const pageId = c.req.query('page_id');
 
-	if (!userId) return c.json({ error: 'User ID is required' }, 400);
 	if (!pageId) return c.json({ error: 'Page ID is required' }, 400);
 
 	// 1. D1から現在のキャッシュを取得
@@ -317,9 +335,8 @@ app.get('/get-blocks', async (c) => {
 
 // ページ一覧を取得するエンドポイント（検索APIを使用）
 app.get('/get-pages', async (c) => {
-	const userId = c.req.query('user_id');
-
-	if (!userId) return c.json({ error: 'User ID is required' }, 400);
+	const userId = await getUserIdFromContext(c);
+	if (!userId) return c.json({ error: 'Unauthorized' }, 401);
 
 	// 1. D1からアクセストークンを取得
 	const user = await c.env.notion_memo
@@ -361,16 +378,19 @@ app.get('/get-pages', async (c) => {
 });
 
 app.post('/add-memo', async (c) => {
-	const { user_id, content, page_id } = await c.req.json();
+	const userId = await getUserIdFromContext(c);
+	if (!userId) return c.json({ error: 'Unauthorized' }, 401);
 
-	if (!user_id || !content || !page_id) {
+	const { content, page_id } = await c.req.json();
+
+	if (!content || !page_id) {
 		return c.json({ error: 'パラメータが不足しています' }, 400);
 	}
 
 	// 1. D1から最新のアクセストークンを取得
 	const user = await c.env.notion_memo
 		.prepare('SELECT access_token FROM users WHERE notion_user_id = ?')
-		.bind(user_id)
+		.bind(userId)
 		.first<{ access_token: string }>();
 
 	if (!user) return c.json({ error: 'ユーザーが見つかりません' }, 404);

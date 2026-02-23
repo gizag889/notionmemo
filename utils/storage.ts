@@ -1,20 +1,21 @@
 // utils/storage.ts
 import * as SecureStore from "expo-secure-store";
 
-export async function saveAuthData(userId: string) {
-  if (!userId) {
+const STORAGE_KEY = "MY_SECURE_AUTH_TOKEN";
+
+export async function saveAuthData(token: string) {
+  if (!token) {
     console.error("saveAuthData に渡された値が空です");
     return;
   }
-  //MY_SECRET_USER_IDというキーでuserIdを保存
-  await SecureStore.setItemAsync("MY_SECRET_USER_ID", userId);
+  await SecureStore.setItemAsync(STORAGE_KEY, token);
 }
 
 export async function getAuthData() {
-  const result = await SecureStore.getItemAsync("MY_SECRET_USER_ID");
+  const result = await SecureStore.getItemAsync(STORAGE_KEY);
   return result; // nullならデータなし、値があれば成功
 }
 
 export async function deleteAuthData() {
-  await SecureStore.deleteItemAsync("MY_SECRET_USER_ID");
+  await SecureStore.deleteItemAsync(STORAGE_KEY);
 }
