@@ -1,3 +1,4 @@
+import { ListBlockChildrenResponse } from '@notionhq/client/build/src/api-endpoints';
 import { Context, Hono } from 'hono';
 import { sign, verify } from 'hono/jwt';
 
@@ -273,7 +274,7 @@ app.get('/get-blocks', async (c) => {
 				return;
 			}
 
-			const data = (await response.json()) as any;
+			const data = (await response.json()) as ListBlockChildrenResponse;
 			const contentJson = JSON.stringify({ results: data.results });
 
 			// D1のキャッシュを上書き更新

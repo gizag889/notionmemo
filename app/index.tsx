@@ -3,14 +3,14 @@ import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { useRef } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import Animated from "react-native-reanimated";
@@ -67,8 +67,24 @@ export default function Home() {
 
   const handleCopy = async () => {
     if (data && data.content.length > 0) {
+      let currentNumber = 1;
       const text = data.content
-        .map((block) => getTextFromBlock(block))
+        .map((block) => {
+          const isBulletedList = block.type === "bulleted_list_item";
+          const isNumberedList = block.type === "numbered_list_item";
+
+          if (isNumberedList) {
+            const prefix = `${currentNumber}. `;
+            currentNumber++;
+            return `${prefix}${getTextFromBlock(block)}`;
+          } else {
+            currentNumber = 1;
+          }
+
+          return isBulletedList
+            ? `• ${getTextFromBlock(block)}`
+            : getTextFromBlock(block);
+        })
         .join("\n");
       // @ts-ignore
       await Clipboard.setStringAsync(text);
@@ -181,25 +197,45 @@ export default function Home() {
 
           <View style={styles.card}>
             {blocks.length > 0 ? (
-              blocks.map((block, index) => {
-                return (
-                  <Text
-                    selectable={true}
-                    key={index}
-                    style={[
-                      block.type === "heading_1"
-                        ? styles.heading1
-                        : block.type === "heading_2"
-                          ? styles.heading2
-                          : block.type === "heading_3"
-                            ? styles.heading3
-                            : styles.paragraph,
-                    ]}
-                  >
-                    {getTextFromBlock(block)}
-                  </Text>
-                );
-              })
+              (() => {
+                let currentNumber = 1;
+                return blocks.map((block, index) => {
+                  const isBulletedList = block.type === "bulleted_list_item";
+                  const isNumberedList = block.type === "numbered_list_item";
+
+                  let prefix = "";
+                  if (isNumberedList) {
+                    prefix = `${currentNumber}. `;
+                    currentNumber++;
+                  } else {
+                    currentNumber = 1;
+                  }
+
+                  if (isBulletedList) {
+                    prefix = "• ";
+                  }
+
+                  return (
+                    <Text
+                      selectable={true}
+                      key={index}
+                      style={[
+                        block.type === "heading_1"
+                          ? styles.heading1
+                          : block.type === "heading_2"
+                            ? styles.heading2
+                            : block.type === "heading_3"
+                              ? styles.heading3
+                              : styles.paragraph,
+                        (isBulletedList || isNumberedList) && styles.listItem,
+                      ]}
+                    >
+                      {prefix}
+                      {getTextFromBlock(block)}
+                    </Text>
+                  );
+                });
+              })()
             ) : (
               <Text style={styles.paragraph}>No content found</Text>
             )}
@@ -339,6 +375,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: "#37352F",
     marginBottom: 6,
+  },
+  listItem: {
+    marginLeft: 16,
   },
   fabContainer: {
     position: "absolute",
