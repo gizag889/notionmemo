@@ -1,10 +1,10 @@
 "use no memo";
 
 import {
-  FlexWidget,
-  ListWidget,
-  SvgWidget,
-  TextWidget,
+    FlexWidget,
+    ListWidget,
+    SvgWidget,
+    TextWidget,
 } from "react-native-android-widget";
 
 export interface WidgetViewProps {
@@ -128,29 +128,51 @@ export function WidgetView({
               }}
             />
           </FlexWidget>
-          {normalizedItems.map((item, index) => (
-            <TextWidget
-              key={index}
-              text={item.text || " "}
-              clickAction="OPEN_MAIN"
-              style={{
-                color: colors.textPrimary,
-                fontSize:
-                  item.type === "heading_1"
-                    ? 20
-                    : item.type === "heading_2"
-                      ? 18
-                      : item.type === "heading_3"
-                        ? 16
-                        : 14,
-                fontWeight: item.type.startsWith("heading") ? "bold" : "normal",
-                marginLeft: 12,
-                marginRight: 12,
-                marginBottom: item.type.startsWith("heading") ? 6 : 12,
-                marginTop: item.type.startsWith("heading") ? 12 : 0,
-              }}
-            />
-          ))}
+          {(() => {
+            let currentNumber = 1;
+            return normalizedItems.map((item, index) => {
+              const isBulletedList = item.type === "bulleted_list_item";
+              const isNumberedList = item.type === "numbered_list_item";
+
+              let prefix = "";
+              if (isNumberedList) {
+                prefix = `${currentNumber}. `;
+                currentNumber++;
+              } else {
+                currentNumber = 1;
+              }
+
+              if (isBulletedList) {
+                prefix = "• ";
+              }
+
+              return (
+                <TextWidget
+                  key={index}
+                  text={`${prefix}${item.text || " "}`}
+                  clickAction="OPEN_MAIN"
+                  style={{
+                    color: colors.textPrimary,
+                    fontSize:
+                      item.type === "heading_1"
+                        ? 20
+                        : item.type === "heading_2"
+                          ? 18
+                          : item.type === "heading_3"
+                            ? 16
+                            : 14,
+                    fontWeight: item.type.startsWith("heading")
+                      ? "bold"
+                      : "normal",
+                    marginLeft: isBulletedList || isNumberedList ? 24 : 12,
+                    marginRight: 12,
+                    marginBottom: item.type.startsWith("heading") ? 6 : 12,
+                    marginTop: item.type.startsWith("heading") ? 12 : 0,
+                  }}
+                />
+              );
+            });
+          })()}
         </ListWidget>
       </FlexWidget>
 
