@@ -85,6 +85,7 @@ async function handleRefresh(
     const data = await fetchUserBlocks(userId);
 
     const simpleContent = data.content.map((block: BlockObjectResponse) => ({
+      id: block.id,
       type: block.type,
       text: getTextFromBlock(block),
       richText: (block as any)[block.type]?.rich_text,

@@ -11,6 +11,7 @@ export interface WidgetViewItem {
   type: string;
   text: string;
   richText?: any[];
+  id?: string;
 }
 
 export interface WidgetViewProps {
@@ -79,7 +80,7 @@ const getSunIconSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun-icon lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
 
 export function WidgetView({
-  items = [{ type: "paragraph", text: "読み込み中..." , richText: []}],
+  items = [{ type: "paragraph", text: "読み込み中...", richText: [] }],
   title = "📌 Notion最新",
   pageId,
   isLoading = false,
@@ -91,15 +92,16 @@ export function WidgetView({
   const normalizedItems: WidgetViewItem[] = Array.isArray(items)
     ? items.map((item) => {
         if (typeof item === "string") {
-          return { type: "paragraph", text: item , richText: []};
+          return { type: "paragraph", text: item, richText: [] };
         }
         if (!item) {
-          return { type: "paragraph", text: "" , richText: []};
+          return { type: "paragraph", text: "", richText: [] };
         }
         return {
           type: item.type || "paragraph",
           text: item.text || "",
           richText: item.richText,
+          id: (item as any).id,
         };
       })
     : [];
@@ -161,6 +163,7 @@ export function WidgetView({
             return normalizedItems.map((item, index) => {
               const isBulletedList = item.type === "bulleted_list_item";
               const isNumberedList = item.type === "numbered_list_item";
+              const isChildPage = item.type === "child_page";
 
               let prefix = "";
               if (isNumberedList) {
@@ -173,6 +176,9 @@ export function WidgetView({
               if (isBulletedList) {
                 prefix = "• ";
               }
+              if (isChildPage) {
+                prefix = "📄 ";
+              }
 
               const isHeading = item.type.startsWith("heading");
               const fontSize =
@@ -183,10 +189,13 @@ export function WidgetView({
                     : item.type === "heading_3"
                       ? 16
                       : 14;
-              const fontWeight = isHeading ? "bold" : "normal";
+              const fontWeight = isHeading || isChildPage ? "bold" : "normal";
               const marginLeft = isBulletedList || isNumberedList ? 24 : 12;
               const marginBottom = isHeading ? 6 : 12;
               const marginTop = isHeading ? 12 : 0;
+
+              const clickAction =
+                isChildPage && item.id ? `OPEN_NOTION:${item.id}` : "OPEN_MAIN";
 
               // Fallback to old simple string approach if no rich text found
               if (!item.richText || item.richText.length === 0) {
@@ -194,7 +203,7 @@ export function WidgetView({
                   <TextWidget
                     key={index}
                     text={`${prefix}${item.text || " "}`}
-                    clickAction="OPEN_MAIN"
+                    clickAction={clickAction}
                     style={{
                       color: colors.textPrimary as any,
                       fontSize,
@@ -212,7 +221,7 @@ export function WidgetView({
               return (
                 <FlexWidget
                   key={index}
-                  clickAction="OPEN_MAIN"
+                  clickAction={clickAction}
                   style={{
                     flexDirection: "row",
                     marginLeft,
