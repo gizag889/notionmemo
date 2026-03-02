@@ -1,3 +1,4 @@
+"use no memo";
 import React from "react";
 import { StyleProp, ViewStyle } from "react-native";
 import { SvgXml } from "react-native-svg";
