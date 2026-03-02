@@ -87,6 +87,7 @@ async function handleRefresh(
     const simpleContent = data.content.map((block: BlockObjectResponse) => ({
       type: block.type,
       text: getTextFromBlock(block),
+      richText: (block as any)[block.type]?.rich_text,
     }));
 
     await renderWidget(

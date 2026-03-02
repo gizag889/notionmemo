@@ -1,14 +1,20 @@
 "use no memo";
 
 import {
-    FlexWidget,
-    ListWidget,
-    SvgWidget,
-    TextWidget,
+  FlexWidget,
+  ListWidget,
+  SvgWidget,
+  TextWidget,
 } from "react-native-android-widget";
 
+export interface WidgetViewItem {
+  type: string;
+  text: string;
+  richText?: any[];
+}
+
 export interface WidgetViewProps {
-  items?: (string | { type: string; text: string })[];
+  items?: (string | WidgetViewItem)[];
   title?: string;
   pageId?: string;
   isLoading?: boolean;
@@ -32,6 +38,27 @@ const THEME_COLORS = {
   },
 } as const;
 
+const NOTION_COLORS: Record<string, string> = {
+  gray: "#9B9A97",
+  brown: "#64473A",
+  orange: "#D9730D",
+  yellow: "#DFAB01",
+  green: "#0F7B6C",
+  blue: "#0B6E99",
+  purple: "#6940A5",
+  pink: "#AD1A72",
+  red: "#E03E3E",
+  gray_background: "#EBECED",
+  brown_background: "#E9E5E3",
+  orange_background: "#FAEBDD",
+  yellow_background: "#FBF3DB",
+  green_background: "#DDEDEA",
+  blue_background: "#DDEBF1",
+  purple_background: "#EAE4F2",
+  pink_background: "#F4DFEB",
+  red_background: "#FBE4E4",
+};
+
 const getRefreshIconSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
 `;
@@ -52,7 +79,7 @@ const getSunIconSvg = (color: string) => `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun-icon lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
 
 export function WidgetView({
-  items = [{ type: "paragraph", text: "読み込み中..." }],
+  items = [{ type: "paragraph", text: "読み込み中..." , richText: []}],
   title = "📌 Notion最新",
   pageId,
   isLoading = false,
@@ -61,17 +88,18 @@ export function WidgetView({
   const colors = THEME_COLORS[theme];
 
   // Helper to normalize items to structured format for backward compatibility
-  const normalizedItems: { type: string; text: string }[] = Array.isArray(items)
+  const normalizedItems: WidgetViewItem[] = Array.isArray(items)
     ? items.map((item) => {
         if (typeof item === "string") {
-          return { type: "paragraph", text: item };
+          return { type: "paragraph", text: item , richText: []};
         }
         if (!item) {
-          return { type: "paragraph", text: "" };
+          return { type: "paragraph", text: "" , richText: []};
         }
         return {
           type: item.type || "paragraph",
           text: item.text || "",
+          richText: item.richText,
         };
       })
     : [];
@@ -146,30 +174,102 @@ export function WidgetView({
                 prefix = "• ";
               }
 
+              const isHeading = item.type.startsWith("heading");
+              const fontSize =
+                item.type === "heading_1"
+                  ? 20
+                  : item.type === "heading_2"
+                    ? 18
+                    : item.type === "heading_3"
+                      ? 16
+                      : 14;
+              const fontWeight = isHeading ? "bold" : "normal";
+              const marginLeft = isBulletedList || isNumberedList ? 24 : 12;
+              const marginBottom = isHeading ? 6 : 12;
+              const marginTop = isHeading ? 12 : 0;
+
+              // Fallback to old simple string approach if no rich text found
+              if (!item.richText || item.richText.length === 0) {
+                return (
+                  <TextWidget
+                    key={index}
+                    text={`${prefix}${item.text || " "}`}
+                    clickAction="OPEN_MAIN"
+                    style={{
+                      color: colors.textPrimary as any,
+                      fontSize,
+                      fontWeight,
+                      marginLeft,
+                      marginRight: 12,
+                      marginBottom,
+                      marginTop,
+                    }}
+                  />
+                );
+              }
+
+              // Rendering styled segments using richText
               return (
-                <TextWidget
+                <FlexWidget
                   key={index}
-                  text={`${prefix}${item.text || " "}`}
                   clickAction="OPEN_MAIN"
                   style={{
-                    color: colors.textPrimary,
-                    fontSize:
-                      item.type === "heading_1"
-                        ? 20
-                        : item.type === "heading_2"
-                          ? 18
-                          : item.type === "heading_3"
-                            ? 16
-                            : 14,
-                    fontWeight: item.type.startsWith("heading")
-                      ? "bold"
-                      : "normal",
-                    marginLeft: isBulletedList || isNumberedList ? 24 : 12,
+                    flexDirection: "row",
+                    marginLeft,
                     marginRight: 12,
-                    marginBottom: item.type.startsWith("heading") ? 6 : 12,
-                    marginTop: item.type.startsWith("heading") ? 12 : 0,
+                    marginBottom,
+                    marginTop,
                   }}
-                />
+                >
+                  <TextWidget
+                    text={prefix}
+                    style={{
+                      color: colors.textPrimary as any,
+                      fontSize,
+                      fontWeight,
+                    }}
+                  />
+                  {item.richText.map((rt: any, rtIndex: number) => {
+                    const plainText = rt.plain_text || "";
+                    if (!plainText) return null;
+
+                    let color: string = colors.textPrimary;
+                    let isBold = fontWeight === "bold";
+                    let isStrikeThrough = false;
+
+                    if (rt.annotations) {
+                      if (rt.annotations.bold) isBold = true;
+                      if (rt.annotations.strikethrough) isStrikeThrough = true;
+
+                      // For widget, stick to text primary color to avoid clashing,
+                      // unless it's a specific notion color. Background colors are hard natively.
+                      // Some text styling like textDecorationLine depends on widget text features,
+                      // but strikethrough/underline is limited on basic android widget. We'll try at least colors.
+                      if (
+                        rt.annotations.color &&
+                        rt.annotations.color !== "default"
+                      ) {
+                        const styleColor = rt.annotations.color;
+                        if (!styleColor.endsWith("_background")) {
+                          color =
+                            NOTION_COLORS[styleColor] || colors.textPrimary;
+                        }
+                      }
+                    }
+
+                    return (
+                      <TextWidget
+                        key={rtIndex}
+                        text={plainText}
+                        style={{
+                          color: color as any,
+                          fontSize,
+                          fontWeight: isBold ? "bold" : "normal",
+                        }}
+                      />
+                    );
+                  })}
+                </FlexWidget>
               );
             });
           })()}

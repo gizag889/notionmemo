@@ -148,6 +148,7 @@ app.get('/auth/notion/callback', async (c) => {
 			redirect_uri: 'https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/callback',
 		}),
 	});
+
 	//レスポンスをjson形式で取得して、NotionTokenResponse型に変換する
 	const tokenData = (await response.json()) as NotionTokenResponse;
 
@@ -170,13 +171,13 @@ app.get('/auth/notion/callback', async (c) => {
 				//ON CONFLICT:notion_user_id が UNIQUE制約 または PRIMARY KEY である前提。
 				//もし notion_user_id がすでに存在していた場合は、その行のaccess_tokenとworkspace_nameを更新する
 				`
-      INSERT INTO users (notion_user_id, access_token, workspace_name, refresh_token, updated_at)
-      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(notion_user_id) DO UPDATE SET
-        access_token = excluded.access_token,
-        refresh_token = excluded.refresh_token,
-        updated_at = CURRENT_TIMESTAMP
-    `,
+				INSERT INTO users (notion_user_id, access_token, workspace_name, refresh_token, updated_at)
+				VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+				ON CONFLICT(notion_user_id) DO UPDATE SET
+					access_token = excluded.access_token,
+					refresh_token = excluded.refresh_token,
+					updated_at = CURRENT_TIMESTAMP
+				`,
 			)
 			.bind(notionUserId, accessToken, tokenData.workspace_name, refreshToken || null)
 			.run();

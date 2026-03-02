@@ -12,30 +12,23 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { GestureDetector } from "react-native-gesture-handler";
-import Animated from "react-native-reanimated";
+import { ContentView } from "../components/ContentView";
+import { FloatingMenu } from "../components/FloatingMenu";
 import { SvgWidget } from "../components/SvgWidget";
-import { useDraggable } from "../hooks/useDraggable";
 import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
 import { deleteAuthData, getAuthData } from "../utils/storage";
 
 import {
-  COPY_ICON_SVG,
-  DRAG_ICON_SVG,
   LINK_ICON_SVG,
-  PENCIL_ICON_SVG,
   REFRESH_ICON_SVG,
   SCROLL_UP_ICON_SVG,
-  UNPLUG_ICON_SVG
+  UNPLUG_ICON_SVG,
 } from "../constants/icons";
 
 export default function Home() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
-
-  // Floating controller state
-  const { pan, animatedStyle } = useDraggable();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["notionBlocks"],
@@ -55,6 +48,7 @@ export default function Home() {
         .map((block) => {
           const isBulletedList = block.type === "bulleted_list_item";
           const isNumberedList = block.type === "numbered_list_item";
+          const isChildPage = block.type === "child_page";
 
           if (isNumberedList) {
             const prefix = `${currentNumber}. `;
@@ -64,9 +58,9 @@ export default function Home() {
             currentNumber = 1;
           }
 
-          return isBulletedList
-            ? `• ${getTextFromBlock(block)}`
-            : getTextFromBlock(block);
+          if (isBulletedList) return `• ${getTextFromBlock(block)}`;
+          if (isChildPage) return `📄 ${getTextFromBlock(block)}`;
+          return getTextFromBlock(block);
         })
         .join("\n");
       // @ts-ignore
@@ -178,51 +172,7 @@ export default function Home() {
             <Text style={styles.title}>{pageTitle}</Text>
           </TouchableOpacity>
 
-          <View style={styles.card}>
-            {blocks.length > 0 ? (
-              (() => {
-                let currentNumber = 1;
-                return blocks.map((block, index) => {
-                  const isBulletedList = block.type === "bulleted_list_item";
-                  const isNumberedList = block.type === "numbered_list_item";
-
-                  let prefix = "";
-                  if (isNumberedList) {
-                    prefix = `${currentNumber}. `;
-                    currentNumber++;
-                  } else {
-                    currentNumber = 1;
-                  }
-
-                  if (isBulletedList) {
-                    prefix = "• ";
-                  }
-
-                  return (
-                    <Text
-                      selectable={true}
-                      key={index}
-                      style={[
-                        block.type === "heading_1"
-                          ? styles.heading1
-                          : block.type === "heading_2"
-                            ? styles.heading2
-                            : block.type === "heading_3"
-                              ? styles.heading3
-                              : styles.paragraph,
-                        (isBulletedList || isNumberedList) && styles.listItem,
-                      ]}
-                    >
-                      {prefix}
-                      {getTextFromBlock(block)}
-                    </Text>
-                  );
-                });
-              })()
-            ) : (
-              <Text style={styles.paragraph}>No content found</Text>
-            )}
-          </View>
+          <ContentView blocks={blocks} />
         </View>
         {/* Scroll To Top */}
         <View style={styles.scrollTopButton}>
@@ -247,56 +197,7 @@ export default function Home() {
         </View>
       </ScrollView>
 
-      <Animated.View style={[styles.fabContainer, animatedStyle]}>
-        {/* Copy Button */}
-        <TouchableOpacity style={styles.controlButton} onPress={handleCopy}>
-          <SvgWidget svg={COPY_ICON_SVG} width={30} height={30} color="#fff" />
-        </TouchableOpacity>
-
-        {/* Quick Input */}
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => router.push("/quick-input")}
-        >
-          <SvgWidget
-            svg={PENCIL_ICON_SVG}
-            style={{
-              height: 28,
-              width: 28,
-            }}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.controlButton}
-          onPress={() => refetch()}
-        >
-          <SvgWidget
-            svg={REFRESH_ICON_SVG}
-            width={24}
-            height={24}
-            color="#fff"
-          />
-        </TouchableOpacity>
-
-        {/* Drag Handle */}
-        <GestureDetector gesture={pan}>
-          <View
-            style={styles.dragHandle}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="ドラッグハンドル"
-            accessibilityHint="ドラッグして位置を移動します"
-          >
-            <SvgWidget
-              svg={DRAG_ICON_SVG}
-              width={24}
-              height={24}
-              color="#fff"
-            />
-          </View>
-        </GestureDetector>
-      </Animated.View>
+      <FloatingMenu onCopy={handleCopy} onRefresh={() => refetch()} />
     </View>
   );
 }
@@ -362,31 +263,7 @@ const styles = StyleSheet.create({
   listItem: {
     marginLeft: 16,
   },
-  fabContainer: {
-    position: "absolute",
-    right: 20,
-    bottom: 50,
-    backgroundColor: "#000",
-    width: 60,
-    borderRadius: 30,
-    alignItems: "center",
-    elevation: 5,
-    paddingVertical: 12,
-    gap: 12,
-  },
-  controlButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dragHandle: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fabText: { color: "#fff", fontSize: 30, lineHeight: 34 },
+
   scrollTopButton: {
     backgroundColor: "#000",
     height: 60,

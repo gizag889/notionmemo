@@ -6,6 +6,9 @@ import {
 } from "@notionhq/client/build/src/api-endpoints";
 
 export const getTextFromBlock = (block: BlockObjectResponse): string => {
+  if (block.type === "child_page") {
+    return (block as any).child_page.title;
+  }
   // @ts-ignore
   const richText: RichTextItemResponse[] = block[block.type]?.rich_text;
   if (!richText) return "";
@@ -36,8 +39,42 @@ export const resolveUserPage = async (
     return { title: "No Pages Found", pageId: "" };
   }
 
-  // Use the first page
-  const page = pagesResults[0];
+  // Create a set of all page IDs in the results for quick lookup
+  const resultIds = new Set(pagesResults.map((p) => p.id));
+
+  // Find the true "root" page (the one whose parent is not among the fetched results)
+  // Search results are sorted by last_edited_time desc, so multiple roots will resolve to the most recently edited one.
+  let rootPage = pagesResults[0];
+
+  for (const page of pagesResults) {
+    const p = page as any;
+    if (!p.parent) continue;
+
+    if (p.parent.type === "workspace") {
+      rootPage = page;
+      break;
+    } else if (
+      p.parent.type === "page_id" &&
+      !resultIds.has(p.parent.page_id)
+    ) {
+      rootPage = page;
+      break;
+    } else if (
+      p.parent.type === "database_id" &&
+      !resultIds.has(p.parent.database_id)
+    ) {
+      rootPage = page;
+      break;
+    } else if (
+      p.parent.type === "block_id" &&
+      !resultIds.has(p.parent.block_id)
+    ) {
+      rootPage = page;
+      break;
+    }
+  }
+
+  const page = rootPage;
   const pageId = page.id;
   let title = "Notion Memo";
 

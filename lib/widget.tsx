@@ -18,6 +18,7 @@ export const updateWidgetContent = async (data: {
   const simpleContent = data.content.map((block) => ({
     type: block.type,
     text: getTextFromBlock(block),
+    richText: (block as any)[block.type]?.rich_text,
   }));
 
   requestWidgetUpdate({
