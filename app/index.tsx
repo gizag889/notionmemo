@@ -70,10 +70,24 @@ export default function Home() {
   };
 
   const handleNotionAuth = () => {
-    // 新しいWorkerのエンドポイントにリダイレクトし、サーバー側でstateを生成してNotionへ送る
-    const authUrl =
-      "https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/login";
-    Linking.openURL(authUrl);
+    Alert.alert(
+      "ページ選択について",
+      "連携画面でウィジェットやアプリに表示したいNotionページを選択してください。複数選択した場合は、最後に更新されたページが表示されます。\n\n※連携するページを変更する場合は、再度この連携手順を行う必要があります。",
+      [
+        {
+          text: "キャンセル",
+          style: "cancel",
+        },
+        {
+          text: "連携画面へ",
+          onPress: () => {
+            const authUrl =
+              "https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/login";
+            Linking.openURL(authUrl);
+          },
+        },
+      ],
+    );
   };
 
   if (isLoading) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
@@ -129,18 +143,6 @@ export default function Home() {
       >
         <View style={{ padding: 20, paddingBottom: 100 }}>
           <View style={{}}>
-            <TouchableOpacity
-              onPress={handleNotionAuth}
-              style={[styles.actionButton, { backgroundColor: "#1E88E5" }]}
-            >
-              <SvgWidget
-                svg={LINK_ICON_SVG}
-                width={24}
-                height={24}
-                color="#fff"
-              />
-            </TouchableOpacity>
-
             <TouchableOpacity
               onPress={async () => {
                 await deleteAuthData();
