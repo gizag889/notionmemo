@@ -30,7 +30,7 @@ export default function Home() {
   const scrollViewRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ["notionBlocks"],
     queryFn: async () => {
       const token = await getAuthData();
@@ -90,7 +90,30 @@ export default function Home() {
     );
   };
 
-  if (isLoading) return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+  if (isLoading || (isFetching && !data)) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#121212",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color="#FFEE58" />
+        <Text
+          style={{
+            color: "white",
+            marginTop: 20,
+            fontSize: 16,
+            fontWeight: "bold",
+          }}
+        >
+          読み込み中...
+        </Text>
+      </View>
+    );
+  }
 
   // User is not logged in
   if (!data) {
@@ -198,6 +221,30 @@ export default function Home() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {isFetching && data && (
+        <View
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: "rgba(18, 18, 18, 0.7)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 10,
+          }}
+        >
+          <ActivityIndicator size="large" color="#FFEE58" />
+          <Text
+            style={{
+              color: "white",
+              marginTop: 16,
+              fontSize: 16,
+              fontWeight: "bold",
+            }}
+          >
+            更新中...
+          </Text>
+        </View>
+      )}
 
       <FloatingMenu onCopy={handleCopy} onRefresh={() => refetch()} />
     </View>

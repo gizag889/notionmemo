@@ -130,7 +130,7 @@ app.get('/auth/notion/callback', async (c) => {
 	if (!stateResult) {
 		return c.text('Invalid or expired state parameter', 400);
 	}
-	//stateを削除する処理を追加する
+	//stateを削除
 	await c.env.notion_memo.prepare('DELETE FROM oauth_states WHERE state = ?').bind(state).run();
 
 	// Notion API へトークン交換のリクエスト
