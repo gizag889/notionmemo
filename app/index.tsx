@@ -2,15 +2,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { useRef } from "react";
+
 import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { ContentView } from "../components/ContentView";
 import { FloatingMenu } from "../components/FloatingMenu";
@@ -19,10 +20,10 @@ import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
 import { deleteAuthData, getAuthData } from "../utils/storage";
 
 import {
-  LINK_ICON_SVG,
-  REFRESH_ICON_SVG,
-  SCROLL_UP_ICON_SVG,
-  UNPLUG_ICON_SVG,
+    LINK_ICON_SVG,
+    REFRESH_ICON_SVG,
+    SCROLL_UP_ICON_SVG,
+    UNPLUG_ICON_SVG,
 } from "../constants/icons";
 
 export default function Home() {
