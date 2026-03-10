@@ -4,14 +4,14 @@ import { useRouter } from "expo-router";
 import { useRef } from "react";
 
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { ContentView } from "../components/ContentView";
 import { FloatingMenu } from "../components/FloatingMenu";
@@ -20,10 +20,10 @@ import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
 import { deleteAuthData, getAuthData } from "../utils/storage";
 
 import {
-    LINK_ICON_SVG,
-    REFRESH_ICON_SVG,
-    SCROLL_UP_ICON_SVG,
-    UNPLUG_ICON_SVG,
+  LINK_ICON_SVG,
+  REFRESH_ICON_SVG,
+  SCROLL_UP_ICON_SVG,
+  UNPLUG_ICON_SVG,
 } from "../constants/icons";
 
 export default function Home() {
@@ -73,7 +73,7 @@ export default function Home() {
   const handleNotionAuth = () => {
     Alert.alert(
       "ページ選択について",
-      "連携画面でウィジェットやアプリに表示したいNotionページを選択してください。複数選択した場合は、最後に更新されたページが表示されます。\n\n※連携するページを変更する場合は、再度この連携手順を行う必要があります。",
+      "連携画面でウィジェットやアプリに表示したいNotionページを選択してください。複数選択した場合は、最後に更新されたページが表示されます。\n\n※このアプリでは複数のページを表示することはできません。",
       [
         {
           text: "キャンセル",
@@ -82,9 +82,9 @@ export default function Home() {
         {
           text: "連携画面へ",
           onPress: () => {
-            const authUrl =
-              "https://polished-grass-a069.gizaguri0426.workers.dev/auth/notion/login";
-            Linking.openURL(authUrl);
+            const loginUrl =
+              "https://viewer-memo.gizaguri0426.workers.dev/auth/notion/login";
+            Linking.openURL(loginUrl);
           },
         },
       ],

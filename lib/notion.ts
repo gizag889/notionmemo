@@ -5,6 +5,8 @@ import {
   SearchResponse,
 } from "@notionhq/client/build/src/api-endpoints";
 
+const API_BASE_URL = "https://viewer-memo.gizaguri0426.workers.dev";
+
 export const getTextFromBlock = (block: BlockObjectResponse): string => {
   if (block.type === "child_page") {
     return (block as any).child_page.title;
@@ -22,7 +24,7 @@ export const resolveUserPage = async (
 ): Promise<{ title: string; pageId: string }> => {
   const pagesResponse = await fetch(
     //index.tsの/get-pagesを呼び出す
-    `https://polished-grass-a069.gizaguri0426.workers.dev/get-pages`,
+    `${API_BASE_URL}/get-pages`,
     {
       headers: { Authorization: `Bearer ${token}` },
     },
@@ -107,12 +109,9 @@ export const fetchUserBlocks = async (
   const { title, pageId } = await resolveUserPage(token);
 
   // 2. Fetch blocks for this specific page
-  const response = await fetch(
-    `https://polished-grass-a069.gizaguri0426.workers.dev/get-blocks?page_id=${pageId}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
+  const response = await fetch(`${API_BASE_URL}/get-blocks?page_id=${pageId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch blocks");

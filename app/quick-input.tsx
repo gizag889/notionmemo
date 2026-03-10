@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import  { useState } from "react";
+import { useState } from "react";
 import {
     ActivityIndicator,
     StyleSheet,
@@ -42,7 +42,7 @@ export default function Home() {
     setIsSending(true);
     try {
       const res = await fetch(
-        "https://polished-grass-a069.gizaguri0426.workers.dev/add-memo",
+        "https://viewer-memo.gizaguri0426.workers.dev/add-memo",
         {
           method: "POST",
           headers: {
