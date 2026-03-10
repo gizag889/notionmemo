@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { useState } from "react";
@@ -66,16 +67,63 @@ export default function HelpScreen() {
           このアプリは、Notionの最新のメモを素早く確認・追加するためのツールです。
         </Text>
 
-        <AccordionItem title="1. メモの確認">
-          <Text style={styles.text}>
-            メイン画面では、連携しているNotionデータベースの最新のメモが表示されます。
-          </Text>
+        <AccordionItem title="1. Notionのページを連携させる">
+          <View>          
+            <View>
+              <Image
+                source={require("../assets/images/start.png")}
+                style={styles.image}
+                contentFit="contain"
+              />
+              <Text style={styles.text}>
+                「Notionと連携する」から、「連携画面へ」を選択します。
+              </Text>
+            </View>
+            <View>
+              <Image
+                source={require("../assets/images/allowance.png")}
+                style={styles.image}
+                contentFit="contain"
+              />
+              <Text style={styles.text}>
+                お手持ちのアカウントでログインします。上記の画面に遷移後、許可するアクセス権限を確認して「ページを選択する」に進みます。{"\n"}※アクセス権限についてはセキュリティポリシーを必ずご確認ください。
+              </Text>
+            </View>
+             <View>
+              <Image
+                source={require("../assets/images/select.png")}
+                style={styles.image}
+                contentFit="contain"
+              />
+              <Text style={styles.text}>
+                連携したいページを一つ選択します。
+              </Text>
+            </View>
+            <View>
+              <Image
+                source={require("../assets/images/success.png")}
+                style={styles.image}
+                contentFit="contain"
+              />
+              <Text style={styles.text}>
+                以上のような画面が表示されれば連携成功です！
+              </Text>
+            </View>
+          </View>
         </AccordionItem>
 
-        <AccordionItem title="2. クイック追加">
-          <Text style={styles.text}>
-            画面下部やホーム画面のウィジェットから、素早くNotionにメモを追加できます。
-          </Text>
+        <AccordionItem title="2. メモを連携したページに追加する">
+          <View>
+              <Image
+                source={require("../assets/images/success.png")}
+                style={styles.image}
+                contentFit="contain"
+              />
+              <Text style={styles.text}>
+                 画面下部やホーム画面のウィジェットから、素早くNotionにメモを追加できます。
+              </Text>
+          </View>
+          
         </AccordionItem>
 
         <AccordionItem title="注意事項">
@@ -131,5 +179,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#444",
     lineHeight: 24,
+  },
+  image: {
+    width: "100%",
+    height: 400,
+    marginVertical: 16,
   },
 });
