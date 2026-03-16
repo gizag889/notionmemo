@@ -7,6 +7,18 @@ import {
 
 const API_BASE_URL = "https://viewer-memo.gizaguri0426.workers.dev";
 
+export const fetchUserInfo = async (
+  token: string,
+): Promise<{ user_id: string; app_user_id: string | null }> => {
+  const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  if (!response.ok) throw new Error("Failed to verify token");
+  return response.json();
+};
+
 export const getTextFromBlock = (block: BlockObjectResponse): string => {
   if (block.type === "child_page") {
     return (block as any).child_page.title;
@@ -123,10 +135,10 @@ export const fetchUserBlocks = async (
     | PartialBlockObjectResponse
   )[];
 
-  // Filter for valid BlockObjectResponse
-  const content = results.filter(
-    (block): block is BlockObjectResponse => "type" in block,
-  );
+  // Filter for valid BlockObjectResponse and slice to max 30 to prevent Widget crashes
+  const content = results
+    .filter((block): block is BlockObjectResponse => "type" in block)
+    .slice(0, 30);
 
   return { title, content, pageId };
 };

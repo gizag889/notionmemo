@@ -1,8 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
+import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   LayoutAnimation,
   Platform,
   ScrollView,
@@ -12,6 +15,10 @@ import {
   UIManager,
   View,
 } from "react-native";
+import { PrivacyModal } from "../components/PrivacyModal";
+import { TermsModal } from "../components/TermsModal";
+import { fetchUserInfo } from "../lib/notion";
+import { getAuthData } from "../utils/storage";
 
 if (
   Platform.OS === "android" &&
@@ -58,6 +65,27 @@ function AccordionItem({
 }
 
 export default function HelpScreen() {
+  const [copied, setCopied] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
+  const { data: userInfo, isLoading: isUserInfoLoading } = useQuery({
+    queryKey: ["userInfo"],
+    queryFn: async () => {
+      const token = await getAuthData();
+      if (!token) return null;
+      return fetchUserInfo(token);
+    },
+  });
+
+  const handleCopyId = async () => {
+    if (userInfo?.app_user_id) {
+      await Clipboard.setStringAsync(userInfo.app_user_id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Stack.Screen options={{ title: "ヘルプ" }} />
@@ -68,7 +96,7 @@ export default function HelpScreen() {
         </Text>
 
         <AccordionItem title="1. Notionのページを連携させる">
-          <View>          
+          <View>
             <View>
               <Image
                 source={require("../assets/images/start.png")}
@@ -86,10 +114,12 @@ export default function HelpScreen() {
                 contentFit="contain"
               />
               <Text style={styles.text}>
-                お手持ちのアカウントでログインします。上記の画面に遷移後、許可するアクセス権限を確認して「ページを選択する」に進みます。{"\n"}※アクセス権限についてはセキュリティポリシーを必ずご確認ください。
+                お手持ちのアカウントでログインします。上記の画面に遷移後、許可するアクセス権限を確認して「ページを選択する」に進みます。
+                {"\n"}
+                ※アクセス権限についてはセキュリティポリシーを必ずご確認ください。
               </Text>
             </View>
-             <View>
+            <View>
               <Image
                 source={require("../assets/images/select.png")}
                 style={styles.image}
@@ -114,16 +144,15 @@ export default function HelpScreen() {
 
         <AccordionItem title="2. メモを連携したページに追加する">
           <View>
-              <Image
-                source={require("../assets/images/success.png")}
-                style={styles.image}
-                contentFit="contain"
-              />
-              <Text style={styles.text}>
-                 画面下部やホーム画面のウィジェットから、素早くNotionにメモを追加できます。
-              </Text>
+            <Image
+              source={require("../assets/images/success.png")}
+              style={styles.image}
+              contentFit="contain"
+            />
+            <Text style={styles.text}>
+              画面下部やホーム画面のウィジェットから、素早くNotionにメモを追加できます。
+            </Text>
           </View>
-          
         </AccordionItem>
 
         <AccordionItem title="注意事項">
@@ -131,7 +160,70 @@ export default function HelpScreen() {
             ネットワーク環境によって、情報の更新に時間がかかる場合があります。
           </Text>
         </AccordionItem>
+
+        <AccordionItem title="データ削除リクエストについて">
+          <View>
+            <Text style={styles.text}>
+              本アプリ上に保存されているご自身のデータを削除するには、お問い合わせ窓口に以下の「アプリ用ユーザーID」を添えてご連絡ください。
+            </Text>
+
+            <View style={styles.idContainer}>
+              {isUserInfoLoading ? (
+                <ActivityIndicator size="small" color="#555" />
+              ) : userInfo?.app_user_id ? (
+                <>
+                  <Text style={styles.idText} selectable={true}>
+                    {userInfo.app_user_id}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.copyButton}
+                    onPress={handleCopyId}
+                  >
+                    <Text style={styles.copyButtonText}>
+                      {copied ? "コピーしました！" : "コピーする"}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <Text style={styles.text}>
+                  データがありません。Notion連携を完了させてください。
+                </Text>
+              )}
+            </View>
+
+            <Text
+              style={[
+                styles.text,
+                { marginTop: 12, fontSize: 14, color: "#666" },
+              ]}
+            >
+              ※
+              このIDはお客様のアカウントを特定するための専用IDです。他の人には共有しないでください。
+            </Text>
+          </View>
+        </AccordionItem>
+
+        <View style={styles.linksContainer}>
+          <TouchableOpacity
+            onPress={() => setShowTerms(true)}
+            style={styles.linkButton}
+          >
+            <Text style={styles.linkText}>利用規約</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowPrivacy(true)}
+            style={styles.linkButton}
+          >
+            <Text style={styles.linkText}>プライバシーポリシー</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <TermsModal forceOpen={showTerms} onClose={() => setShowTerms(false)} />
+      <PrivacyModal
+        forceOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+      />
     </ScrollView>
   );
 }
@@ -184,5 +276,45 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 400,
     marginVertical: 16,
+  },
+  idContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  idText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#333",
+    marginBottom: 12,
+  },
+  copyButton: {
+    backgroundColor: "#2986ff",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  copyButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  linksContainer: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    paddingTop: 20,
+    gap: 16,
+  },
+  linkButton: {
+    paddingVertical: 8,
+  },
+  linkText: {
+    fontSize: 16,
+    color: "#007bff",
+    textDecorationLine: "underline",
   },
 });

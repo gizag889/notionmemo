@@ -15,7 +15,9 @@ import {
 } from "react-native";
 import { ContentView } from "../components/ContentView";
 import { FloatingMenu } from "../components/FloatingMenu";
+import { PrivacyModal } from "../components/PrivacyModal";
 import { SvgWidget } from "../components/SvgWidget";
+import { TermsModal } from "../components/TermsModal";
 import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
 import { deleteAuthData, getAuthData } from "../utils/storage";
 
@@ -101,6 +103,8 @@ export default function Home() {
           alignItems: "center",
         }}
       >
+        <PrivacyModal />
+        <TermsModal />
         <ActivityIndicator size="large" color="#FFEE58" />
         <Text
           style={{
@@ -120,6 +124,8 @@ export default function Home() {
   if (!data) {
     return (
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
+        <PrivacyModal />
+        <TermsModal />
         <View style={{ marginTop: 100 }} />
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -158,6 +164,8 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1 }}>
+      <PrivacyModal />
+      <TermsModal />
       <ScrollView
         style={styles.container}
         ref={scrollViewRef}

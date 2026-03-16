@@ -230,14 +230,16 @@ export function WidgetView({
                     marginTop,
                   }}
                 >
-                  <TextWidget
-                    text={prefix}
-                    style={{
-                      color: colors.textPrimary as any,
-                      fontSize,
-                      fontWeight,
-                    }}
-                  />
+                  {prefix !== "" && (
+                    <TextWidget
+                      text={prefix}
+                      style={{
+                        color: colors.textPrimary as any,
+                        fontSize,
+                        fontWeight,
+                      }}
+                    />
+                  )}
                   {item.richText.map((rt: any, rtIndex: number) => {
                     const plainText = rt.plain_text || "";
                     if (!plainText) return null;
