@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { resolveUserPage } from "../lib/notion";
@@ -30,11 +30,38 @@ export default function Home() {
 
   // メモ送信処理
   async function handleSendMemo() {
-    if (!memoText || !pageInfo?.pageId || !pageInfo?.token) {
+    if (!memoText.trim()) {
       Toast.show({
         type: "error",
         text1: "エラー",
-        text2: "メモを入力し、ページを選択してください",
+        text2: "メモを入力してください",
+      });
+      return;
+    }
+
+    if (isLoading) {
+      Toast.show({
+        type: "info",
+        text1: "読み込み中",
+        text2: "ページ情報を取得中です。少々お待ちください",
+      });
+      return;
+    }
+
+    if (!pageInfo?.token) {
+      Toast.show({
+        type: "error",
+        text1: "エラー",
+        text2: "Notionの連携情報がありません。再ログインしてください",
+      });
+      return;
+    }
+
+    if (!pageInfo?.pageId) {
+      Toast.show({
+        type: "error",
+        text1: "エラー",
+        text2: "連携できるNotionページが見つかりません",
       });
       return;
     }
