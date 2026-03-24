@@ -138,7 +138,7 @@ export const fetchUserBlocks = async (
   // Filter for valid BlockObjectResponse and slice to max 30 to prevent Widget crashes
   const content = results
     .filter((block): block is BlockObjectResponse => "type" in block)
-    .slice(0, 30);
+    .slice(0, 50);
 
   return { title, content, pageId };
 };

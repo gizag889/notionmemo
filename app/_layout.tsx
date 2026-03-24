@@ -56,7 +56,7 @@ export default Sentry.wrap(function Layout() {
           <Stack.Screen
             name="index"
             options={{
-              title: "Notion Viewer",
+              title: "Viewer Memo for Notion",
               headerRight: () => (
                 <TouchableOpacity
                   onPress={() => router.push("/help")}

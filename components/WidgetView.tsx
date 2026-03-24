@@ -6,6 +6,7 @@ import {
   SvgWidget,
   TextWidget,
 } from "react-native-android-widget";
+import appConfig from "../app.json";
 
 export interface WidgetViewItem {
   type: string;
@@ -132,7 +133,12 @@ export function WidgetView({
           }}
         >
           <FlexWidget
-            clickAction={pageId ? `OPEN_NOTION:${pageId}` : "OPEN_NOTION"}
+            clickAction="OPEN_URI"
+            clickActionData={{
+              uri: pageId
+                ? `https://www.notion.so/${pageId.replace(/-/g, "")}`
+                : "https://www.notion.so/",
+            }}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -194,8 +200,13 @@ export function WidgetView({
               const marginBottom = isHeading ? 6 : 12;
               const marginTop = isHeading ? 12 : 0;
 
-              const clickAction =
-                isChildPage && item.id ? `OPEN_NOTION:${item.id}` : "OPEN_MAIN";
+              const clickAction = "OPEN_URI";
+              const clickActionData = {
+                uri:
+                  isChildPage && item.id
+                    ? `https://www.notion.so/${item.id.replace(/-/g, "")}`
+                    : `${appConfig.expo.scheme}://`,
+              };
 
               // Fallback to old simple string approach if no rich text found
               if (!item.richText || item.richText.length === 0) {
@@ -204,6 +215,7 @@ export function WidgetView({
                     key={index}
                     text={`${prefix}${item.text || " "}`}
                     clickAction={clickAction}
+                    clickActionData={clickActionData}
                     style={{
                       color: colors.textPrimary as any,
                       fontSize,
@@ -222,6 +234,7 @@ export function WidgetView({
                 <FlexWidget
                   key={index}
                   clickAction={clickAction}
+                  clickActionData={clickActionData}
                   style={{
                     flexDirection: "row",
                     marginLeft,
@@ -340,7 +353,8 @@ export function WidgetView({
         </FlexWidget>
 
         <FlexWidget
-          clickAction="OPEN_INPUT"
+          clickAction="OPEN_URI"
+          clickActionData={{ uri: `${appConfig.expo.scheme}://quick-input` }}
           style={{
             paddingLeft: 14,
             justifyContent: "center",

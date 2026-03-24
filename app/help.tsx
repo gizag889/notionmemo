@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { Stack } from "expo-router";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { useState } from "react";
+import { useVideoPlayer, VideoView } from "expo-video";
 import {
   ActivityIndicator,
   LayoutAnimation,
@@ -15,10 +16,13 @@ import {
   UIManager,
   View,
 } from "react-native";
+import { SvgWidget } from "../components/SvgWidget";
+import {REFRESH_ICON_SVG, UNPLUG_ICON_SVG} from "../constants/icons";
 import { PrivacyModal } from "../components/PrivacyModal";
 import { TermsModal } from "../components/TermsModal";
 import { fetchUserInfo } from "../lib/notion";
 import { getAuthData } from "../utils/storage";
+import { Background } from "@react-navigation/elements";
 
 if (
   Platform.OS === "android" &&
@@ -69,6 +73,13 @@ export default function HelpScreen() {
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
+  const videoSource = require("../assets/images/screen.mp4");
+  const player = useVideoPlayer(videoSource, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
   const { data: userInfo, isLoading: isUserInfoLoading } = useQuery({
     queryKey: ["userInfo"],
     queryFn: async () => {
@@ -90,12 +101,9 @@ export default function HelpScreen() {
     <ScrollView style={styles.container}>
       <Stack.Screen options={{ title: "ヘルプ" }} />
       <View style={styles.content}>
-        <Text style={styles.title}>Notion Viewer の使い方</Text>
-        <Text style={styles.description}>
-          このアプリは、Notionの最新のメモを素早く確認・追加するためのツールです。
-        </Text>
+        <Text style={styles.title}>Viewer Memo for Notion の使い方</Text>
 
-        <AccordionItem title="1. Notionのページを連携させる">
+        <AccordionItem title="Notionのページを連携させる">
           <View>
             <View>
               <Image
@@ -115,8 +123,6 @@ export default function HelpScreen() {
               />
               <Text style={styles.text}>
                 お手持ちのアカウントでログインします。上記の画面に遷移後、許可するアクセス権限を確認して「ページを選択する」に進みます。
-                {"\n"}
-                ※アクセス権限についてはセキュリティポリシーを必ずご確認ください。
               </Text>
             </View>
             <View>
@@ -141,11 +147,26 @@ export default function HelpScreen() {
             </View>
           </View>
         </AccordionItem>
+        <AccordionItem title="ホーム画面にウィジェットを追加する">
+          <View>
+            <VideoView
+              player={player}
+              style={styles.image}
+              nativeControls={false}
+              contentFit="contain"
+            />
+            <Text style={styles.text}>
+              連携したページの内容が表示されていれば成功です。
+              {"\n"}
+              ※ブロックの数が50を超えるとそれ以上は表示されません。
+            </Text>
+          </View>
+        </AccordionItem>
 
-        <AccordionItem title="2. メモを連携したページに追加する">
+        <AccordionItem title="メモを連携したページに追加する">
           <View>
             <Image
-              source={require("../assets/images/success.png")}
+              source={require("../assets/images/input.png")}
               style={styles.image}
               contentFit="contain"
             />
@@ -154,10 +175,48 @@ export default function HelpScreen() {
             </Text>
           </View>
         </AccordionItem>
+        <AccordionItem title="その他アイコン説明">
+          <View>
+            <View style={[styles.actionButton, { backgroundColor: "#2222222" }]}>
+             <SvgWidget
+                            svg={REFRESH_ICON_SVG}
+                            width={24}
+                            height={24}
+                            color="#fff"
+                          />
+              </View>
+            <Text style={styles.text}>
+              ページの内容を更新します。
+            </Text>
+          </View>
+           <View>
+            <View style={[styles.actionButton, { backgroundColor: "#D32F2F" }]}>
+             <SvgWidget
+                            svg={UNPLUG_ICON_SVG}
+                            width={24}
+                            height={24}
+                            color="#fff"
+                          />
+              </View>
+            <Text style={styles.text}>
+              ページ連携を解除します。
+            </Text>
+          </View>
+          
+        </AccordionItem>
 
-        <AccordionItem title="注意事項">
-          <Text style={styles.text}>
-            ネットワーク環境によって、情報の更新に時間がかかる場合があります。
+
+        <AccordionItem title="うまく表示されないとき">
+          <Text style={styles.strong}>
+            ・一部リッチなコンテンツ、トグル、画像、動画などは表示されません。
+                                       {"\n"}
+            ・連携時に複数のページを選んだ場合、最後に編集されたほうが表示されます。                          
+            {"\n"}
+            ・連携時、ページ選択画面に進まず、Notionアプリが開いてしまう場合、ブラウザの「閲覧データの削除」をお試しください。
+            ※googleアカウントの場合、
+            {"\n"}
+           ・ブロック数が50を超えるとウィジェットでは、それ以上表示されません。
+
           </Text>
         </AccordionItem>
 
@@ -272,6 +331,10 @@ const styles = StyleSheet.create({
     color: "#444",
     lineHeight: 24,
   },
+  strong: {
+    fontWeight: "bold",
+    color: "#333",
+  },
   image: {
     width: "100%",
     height: 400,
@@ -301,6 +364,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 14,
+  },
+    actionButton: {
+    backgroundColor: "#333",
+    width: 50,
+    height: 50,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
   },
   linksContainer: {
     marginTop: 20,

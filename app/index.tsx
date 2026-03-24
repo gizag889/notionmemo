@@ -178,8 +178,7 @@ export default function Home() {
             <TouchableOpacity
               onPress={async () => {
                 await deleteAuthData();
-                const val = await getAuthData();
-                alert("リセット結果 (nullなら成功): " + val);
+                alert("ページ連携を解除しました。");
                 // Invalidate query to update UI logic (show login button)
                 queryClient.invalidateQueries({ queryKey: ["notionBlocks"] });
               }}
