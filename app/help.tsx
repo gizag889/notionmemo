@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   UIManager,
   View,
+  Linking
 } from "react-native";
 import { SvgWidget } from "../components/SvgWidget";
 import {REFRESH_ICON_SVG, UNPLUG_ICON_SVG} from "../constants/icons";
@@ -22,7 +23,6 @@ import { PrivacyModal } from "../components/PrivacyModal";
 import { TermsModal } from "../components/TermsModal";
 import { fetchUserInfo } from "../lib/notion";
 import { getAuthData } from "../utils/storage";
-import { Background } from "@react-navigation/elements";
 
 if (
   Platform.OS === "android" &&
@@ -206,14 +206,14 @@ export default function HelpScreen() {
         </AccordionItem>
 
 
-        <AccordionItem title="うまく表示されないとき">
+        <AccordionItem title="うまく連携・表示できないとき">
           <Text style={styles.strong}>
             ・一部リッチなコンテンツ、トグル、画像、動画などは表示されません。
                                        {"\n"}
             ・連携時に複数のページを選んだ場合、最後に編集されたほうが表示されます。                          
             {"\n"}
             ・連携時、ページ選択画面に進まず、Notionアプリが開いてしまう場合、ブラウザの「閲覧データの削除」をお試しください。
-            ※googleアカウントの場合、
+            ※googleアカウントの場合、ブラウザで下部に表示されるアカウントをひとつ選択してください。
             {"\n"}
            ・ブロック数が50を超えるとウィジェットでは、それ以上表示されません。
 
@@ -223,7 +223,16 @@ export default function HelpScreen() {
         <AccordionItem title="データ削除リクエストについて">
           <View>
             <Text style={styles.text}>
-              本アプリ上に保存されているご自身のデータを削除するには、お問い合わせ窓口に以下の「アプリ用ユーザーID」を添えてご連絡ください。
+              本アプリ上に保存されているご自身のデータを削除するには、お問い合わせ窓口
+                          <Text
+                            onPress={() =>
+                              Linking.openURL("https://forms.gle/9hiKPnwAaRRy5vHk6")
+                            }
+                          >
+                            • データ削除リクエスト受付
+                            <Text style={styles.link}>こちら</Text>
+                          </Text>
+              に以下の「アプリ用ユーザーID」を添えてご連絡ください。
             </Text>
 
             <View style={styles.idContainer}>
@@ -300,6 +309,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 8,
+  },
+   link: {
+    color: "#007bff",
+    textDecorationLine: "underline",
   },
   description: {
     fontSize: 16,

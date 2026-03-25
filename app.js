@@ -1,6 +1,13 @@
 import * as Linking from 'expo-linking';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
+import mobileAds from 'react-native-google-mobile-ads';
+
+mobileAds()
+  .initialize()
+  .then(adapterStatuses => {
+    console.log('AdMob初期化完了！');
+  });
 
 export default function App() {
   const url = Linking.useURL(); // アプリが受け取ったURLをリアルタイムで取得

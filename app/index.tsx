@@ -28,10 +28,24 @@ import {
   UNPLUG_ICON_SVG,
 } from "../constants/icons";
 
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+} from "react-native-google-mobile-ads";
+interface Props {
+  size: BannerAdSize;
+}
+
+
+
 export default function Home() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
+
+    const unitId = TestIds.BANNER;
+
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: ["notionBlocks"],
@@ -207,6 +221,7 @@ export default function Home() {
 
           <ContentView blocks={blocks} />
         </View>
+        
         {/* Scroll To Top */}
         <View style={styles.scrollTopButton}>
           <TouchableOpacity
@@ -228,6 +243,10 @@ export default function Home() {
             />
           </TouchableOpacity>
         </View>
+         <BannerAd
+      size={BannerAdSize.BANNER}
+      unitId={unitId}
+    />
       </ScrollView>
 
       {isFetching && data && (
