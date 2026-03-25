@@ -32,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   scheme: "viewer-memo",
   name: "Viewer Memo for Notion",
-  slug: "viewer-memo",
+  slug: "notionmemo",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
