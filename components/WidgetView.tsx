@@ -6,7 +6,6 @@ import {
   SvgWidget,
   TextWidget,
 } from "react-native-android-widget";
-import appConfig from "../app.json";
 
 export interface WidgetViewItem {
   type: string;
@@ -205,7 +204,7 @@ export function WidgetView({
                 uri:
                   isChildPage && item.id
                     ? `https://www.notion.so/${item.id.replace(/-/g, "")}`
-                    : `${appConfig.expo.scheme}://`,
+                    : "viewer-memo://",
               };
 
               // Fallback to old simple string approach if no rich text found
@@ -354,7 +353,7 @@ export function WidgetView({
 
         <FlexWidget
           clickAction="OPEN_URI"
-          clickActionData={{ uri: `${appConfig.expo.scheme}://quick-input` }}
+          clickActionData={{ uri: "viewer-memo://quick-input" }}
           style={{
             paddingLeft: 14,
             justifyContent: "center",

@@ -3,7 +3,6 @@ import type { BlockObjectResponse } from "@notionhq/client/build/src/api-endpoin
 import * as Linking from "expo-linking";
 import React from "react";
 import type { WidgetTaskHandlerProps } from "react-native-android-widget";
-import appConfig from "../app.json";
 import { WidgetView } from "../components/WidgetView";
 import { fetchUserBlocks, getTextFromBlock } from "../lib/notion";
 import { getWidgetTheme, saveWidgetTheme } from "../lib/widget-storage";
@@ -22,10 +21,10 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
     case "WIDGET_CLICK":
       if (clickAction === "OPEN_MAIN") {
-        Linking.openURL(`${appConfig.expo.scheme}://`);
+        Linking.openURL("viewer-memo://");
       }
       if (clickAction === "OPEN_INPUT") {
-        Linking.openURL(`${appConfig.expo.scheme}://quick-input`);
+        Linking.openURL("viewer-memo://quick-input");
       }
       if (clickAction === "TOGGLE_THEME") {
         const currentTheme = await getWidgetTheme();
