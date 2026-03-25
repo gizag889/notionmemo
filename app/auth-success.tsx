@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { saveAuthData } from "../utils/storage";
-import { Button } from 'react-native';
+import { useQueryClient } from "@tanstack/react-query";
 
 import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 
@@ -21,23 +21,39 @@ export default function AuthSuccess() {
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const queryClient = useQueryClient();
 
 
   useEffect(() => {
     let isCancelled = false;
-
-    // 広告の読み込みイベント
-    const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
-      if (!isCancelled) setLoaded(true);
-    });
 
     // 広告が閉じられた時のイベントで遷移させる
     const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
       if (!isCancelled) router.replace("/");
     });
 
-    // 広告をロード
-    interstitial.load();
+    const waitForAd = () => queryClient.fetchQuery({
+      queryKey: ['interstitialAd'],
+      queryFn: () => new Promise<boolean>((resolve) => {
+        if (interstitial.loaded) return resolve(true);
+
+        const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
+          unsubscribeLoaded();
+          unsubscribeError();
+          if (!isCancelled) setLoaded(true);
+          resolve(true);
+        });
+
+        const unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, () => {
+          unsubscribeLoaded();
+          unsubscribeError();
+          resolve(false);
+        });
+
+        interstitial.load();
+      }),
+      staleTime: Infinity,
+    });
 
     async function handleLogin() {
       let isSuccess = false;
@@ -57,14 +73,16 @@ export default function AuthSuccess() {
       }
 
       if (isSuccess && !isCancelled) {
-        // 保存成功時点で広告がロードされていなければ、1秒だけロードを待つ猶予を持たせる
-        setTimeout(() => {
-          if (interstitial.loaded) {
+        // 広告のロードが終わるまで非同期で待機する
+        const isAdLoaded = await waitForAd();
+
+        if (!isCancelled) {
+          if (isAdLoaded) {
             interstitial.show();
           } else {
             router.replace("/");
           }
-        }, 3000); // 1秒遅延して広告の表示チャンスを増やす
+        }
       }
     }
 
@@ -74,7 +92,6 @@ export default function AuthSuccess() {
 
     return () => {
       isCancelled = true;
-      unsubscribeLoaded();
       unsubscribeClosed();
     };
   }, [user_id, token]);
