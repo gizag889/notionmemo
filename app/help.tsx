@@ -188,7 +188,7 @@ export default function HelpScreen() {
             <Text style={styles.text}>
               ページの内容を更新します。
               {"\n"}
-              <Text style={styles.strong}>※アプリを完全に切ってしまうとボタンが効かなくなります。バックグラウンドで起動している状態を維持してください。</Text>    
+              <Text style={styles.strong}>※ウィジェットの更新ボタンは、アプリを完全に切ってしまうとボタンが効かなくなります。バックグラウンドで起動している状態を維持してください。</Text>    
                      </Text>
           </View>
            <View>
