@@ -134,8 +134,55 @@ export default function Home() {
     );
   }
 
+  if (error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#121212", justifyContent: "center", alignItems: "center", padding: 20 }}>
+        <PrivacyModal />
+        <TermsModal />
+        <Text style={{ color: "#ef5350", fontSize: 18, fontWeight: "bold", marginBottom: 10, textAlign: "center" }}>
+          データの取得に失敗しました
+        </Text>
+        <Text style={{ color: "#aaa", fontSize: 14, marginBottom: 30, textAlign: "center", lineHeight: 22 }}>
+          通信エラーが発生しました。{"\n"}ネットワーク環境を確認して再試行してください。
+        </Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.customButton}
+            onPress={() => refetch()}
+          >
+            <SvgWidget
+              svg={REFRESH_ICON_SVG}
+              width={22}
+              height={22}
+              color="#fff"
+            />
+            <Text style={styles.customButtonText}>再試行</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ marginTop: 20 }} />
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.customButton, { backgroundColor: "#D32F2F" }]}
+            onPress={async () => {
+              await deleteAuthData();
+              queryClient.invalidateQueries({ queryKey: ["notionBlocks"] });
+            }}
+          >
+            <SvgWidget
+              svg={UNPLUG_ICON_SVG}
+              width={22}
+              height={22}
+              color="#fff"
+            />
+            <Text style={styles.customButtonText}>連携を解除する</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   // User is not logged in
-  if (!data) {
+  if (data === null) {
     return (
       <View style={{ flex: 1, backgroundColor: "#121212" }}>
         <PrivacyModal />
@@ -174,6 +221,8 @@ export default function Home() {
     );
   }
 
+  if (!data) return null; // Type narrowing fallback
+  
   const { title: pageTitle, content: blocks, pageId } = data;
 
   return (
