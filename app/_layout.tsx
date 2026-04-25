@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, router } from "expo-router";
+import React, { createContext, useState } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Circle, Path, Svg } from "react-native-svg";
@@ -48,26 +49,36 @@ const HelpIcon = () => (
 
 const queryClient = new QueryClient();
 
+export const PortalContext = createContext<{
+  portal: React.ReactNode;
+  setPortal: React.Dispatch<React.SetStateAction<React.ReactNode>>;
+}>({ portal: null, setPortal: () => {} });
+
 export default Sentry.wrap(function Layout() {
+  const [portal, setPortal] = useState<React.ReactNode>(null);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <Stack>
-          <Stack.Screen
-            name="index"
-            options={{
-              title: "Viewer Memo for Notion",
-              headerRight: () => (
-                <TouchableOpacity
-                  onPress={() => router.push("/help")}
-                  style={{ marginRight: 15 }}
-                >
-                  <HelpIcon />
-                </TouchableOpacity>
-              ),
-            }}
-          />
-        </Stack>
+        <PortalContext.Provider value={{ portal, setPortal }}>
+          <Stack>
+            <Stack.Screen
+              name="index"
+              options={{
+                title: "Viewer Memo for Notion",
+                headerRight: () => (
+                  <TouchableOpacity
+                    onPress={() => router.push("/help")}
+                    style={{ marginRight: 15 }}
+                  >
+                    <HelpIcon />
+                  </TouchableOpacity>
+                ),
+              }}
+            />
+          </Stack>
+          {portal}
+        </PortalContext.Provider>
       </QueryClientProvider>
       <Toast />
     </GestureHandlerRootView>

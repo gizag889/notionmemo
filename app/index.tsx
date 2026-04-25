@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
-import { useRouter } from "expo-router";
-import { useRef } from "react";
-
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useContext, useRef } from "react";
+import { PortalContext } from "./_layout";
 import {
   ActivityIndicator,
   Alert,
@@ -43,6 +43,7 @@ export default function Home() {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
+  const { setPortal } = useContext(PortalContext);
 
     const unitId = TestIds.BANNER;
 
@@ -58,7 +59,7 @@ export default function Home() {
     },
   });
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     if (data && data.content.length > 0) {
       let currentNumber = 1;
       const text = data.content
@@ -84,7 +85,24 @@ export default function Home() {
       await Clipboard.setStringAsync(text);
       Alert.alert("コピーしました", "クリップボードに保存しました。");
     }
-  };
+  }, [data]);
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (data) {
+        setPortal(
+          <FloatingMenu onCopy={handleCopy} onRefresh={handleRefresh} />,
+        );
+      } else {
+        setPortal(null);
+      }
+      return () => setPortal(null);
+    }, [data, handleCopy, handleRefresh, setPortal]),
+  );
 
   const handleNotionAuth = () => {
     Alert.alert(
@@ -321,8 +339,6 @@ export default function Home() {
           </Text>
         </View>
       )}
-
-      <FloatingMenu onCopy={handleCopy} onRefresh={() => refetch()} />
     </View>
   );
 }
