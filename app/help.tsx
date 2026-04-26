@@ -18,7 +18,7 @@ import {
   Linking
 } from "react-native";
 import { SvgWidget } from "../components/SvgWidget";
-import {REFRESH_ICON_SVG, UNPLUG_ICON_SVG} from "../constants/icons";
+import { REFRESH_ICON_SVG, UNPLUG_ICON_SVG, SCROLL_UP_ICON_SVG } from "../constants/icons";
 import { PrivacyModal } from "../components/PrivacyModal";
 import { TermsModal } from "../components/TermsModal";
 import { fetchUserInfo } from "../lib/notion";
@@ -177,7 +177,20 @@ export default function HelpScreen() {
         </AccordionItem>
         <AccordionItem title="その他アイコン説明">
           <View>
-            <View style={[styles.actionButton, { backgroundColor: "#2222222" }]}>
+            <View style={[styles.actionButton, { backgroundColor: "#000" }]}>
+              <SvgWidget
+                svg={SCROLL_UP_ICON_SVG}
+                width={24}
+                height={24}
+                color="#fff"
+              />
+            </View>
+            <Text style={styles.text}>
+              画面上部にスクロールします。
+            </Text>
+          </View>
+          <View>
+            <View style={[styles.actionButton, { backgroundColor: "#222222" }]}>
              <SvgWidget
                             svg={REFRESH_ICON_SVG}
                             width={24}
