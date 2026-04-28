@@ -36,9 +36,13 @@ export const resolveUserPage = async (
 ): Promise<{ title: string; pageId: string }> => {
   const pagesResponse = await fetch(
     //index.tsの/get-pagesを呼び出す
-    `${API_BASE_URL}/get-pages`,
+    `${API_BASE_URL}/get-pages?_t=${Date.now()}`,
     {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+      },
     },
   );
 
@@ -121,9 +125,16 @@ export const fetchUserBlocks = async (
   const { title, pageId } = await resolveUserPage(token);
 
   // 2. Fetch blocks for this specific page
-  const response = await fetch(`${API_BASE_URL}/get-blocks?page_id=${pageId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/get-blocks?page_id=${pageId}&_t=${Date.now()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+      },
+    },
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch blocks");
