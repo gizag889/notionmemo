@@ -55,7 +55,7 @@ export default function Home() {
       if (!token) {
         return null;
       }
-      return fetchUserBlocks(token);
+      return fetchUserBlocks(token, true); // forceRefresh = true for the main app
     },
   });
 

@@ -33,7 +33,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
         await handleRefresh(renderWidget);
       }
       if (clickAction === "REFRESH") {
-        await handleRefresh(renderWidget);
+        await handleRefresh(renderWidget, true);
       }
       if (
         clickAction === "OPEN_NOTION" ||
@@ -62,6 +62,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
 
 async function handleRefresh(
   renderWidget: (widget: React.JSX.Element) => Promise<void> | void,
+  forceRefresh: boolean = false
 ) {
   const theme = await getWidgetTheme();
 
@@ -82,7 +83,7 @@ async function handleRefresh(
   }
 
   try {
-    const data = await fetchUserBlocks(userId);
+    const data = await fetchUserBlocks(userId, forceRefresh);
 
     const simpleContent = data.content.map((block: BlockObjectResponse) => ({
       id: block.id,

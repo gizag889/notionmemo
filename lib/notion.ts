@@ -117,6 +117,7 @@ export const fetchPageTitle = async (token: string): Promise<string> => {
 // Update return type to include title and pageId
 export const fetchUserBlocks = async (
   token: string,
+  forceRefresh: boolean = false
 ): Promise<{
   title: string;
   content: BlockObjectResponse[];
@@ -126,7 +127,7 @@ export const fetchUserBlocks = async (
 
   // 2. Fetch blocks for this specific page
   const response = await fetch(
-    `${API_BASE_URL}/get-blocks?page_id=${pageId}&_t=${Date.now()}`,
+    `${API_BASE_URL}/get-blocks?page_id=${pageId}&force_refresh=${forceRefresh}&_t=${Date.now()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
