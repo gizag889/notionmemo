@@ -222,18 +222,23 @@ export default function HelpScreen() {
 
 
         <AccordionItem title="うまく連携・表示できないとき">
-          <Text style={styles.strong}>
-            ・一部リッチなコンテンツ、トグル、画像、動画などは表示されません。
-                                       {"\n"}
-            ・連携時に複数のページを選んだ場合、最後に編集されたほうが表示されます。                          
-            {"\n"}
-            ・連携時、ページ選択画面に進まず、Notionアプリが開いてしまう場合、ブラウザの「閲覧データの削除」をお試しください。
-            ※googleアカウントの場合、ブラウザで下部に表示されるアカウントをひとつ選択してください。
-            {"\n"}
-           ・ブロック数が50を超えるとウィジェットでは、それ以上表示されません。※空欄もブロック数とカウントされます。
-           {"\n"}
-           ・ウィジェットの更新ボタンはバックグラウンドで起動している状態でないと効きません。
-          </Text>
+          <View style={{ gap: 12 }}>
+            <Text style={[styles.text, styles.strong]}>
+              ・一部リッチなコンテンツ、トグル、画像、動画などは表示されません。
+            </Text>
+            <Text style={[styles.text, styles.strong]}>
+              ・連携時に複数のページを選んだ場合、最後に編集されたほうが表示されます。
+            </Text>
+            <Text style={[styles.text, styles.strong]}>
+              ・連携時、ページ選択画面に進まず、Notionアプリが開いてしまう場合、ブラウザの「閲覧データの削除」をお試しください。それでも、アプリが開いてしまう場合、アプリを停止するかアンインストールしてから連携を再度お試しください
+            </Text>
+            <Text style={[styles.text, styles.strong]}>
+              ・ブロック数が50を超えるとウィジェットでは、それ以上表示されません。※空欄もブロック数とカウントされます。
+            </Text>
+            <Text style={[styles.text, styles.strong]}>
+              ・ウィジェットの更新ボタンはバックグラウンドで起動している状態でないと効きません。
+            </Text>
+          </View>
         </AccordionItem>
 
         <AccordionItem title="データ削除リクエストについて">
