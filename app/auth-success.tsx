@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
 
-const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-3940256099942544/1033173712';
+const adUnitId = process.env.EXPO_PUBLIC_INTERSTITIAL_AD_UNIT_ID || TestIds.INTERSTITIAL;
 
 const interstitial = InterstitialAd.createForAdRequest(adUnitId, {
   requestNonPersonalizedAdsOnly: true,

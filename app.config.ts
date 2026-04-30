@@ -76,6 +76,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     eas: {
       projectId: "549c2150-1af5-4083-b189-1f151b461f72",
+      
     },
   },
   owner: "gizag889",
@@ -84,7 +85,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "react-native-google-mobile-ads",
       {
-        androidAppId: "ca-app-pub-3940256099942544~3347511713",
+        androidAppId: "ca-app-pub-8138082752217427~3440482983",
       },
     ],
     "expo-router",

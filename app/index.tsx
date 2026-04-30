@@ -45,7 +45,7 @@ export default function Home() {
   const queryClient = useQueryClient();
   const { setPortal } = useContext(PortalContext);
 
-    const unitId = TestIds.BANNER;
+  const unitId = process.env.EXPO_PUBLIC_BANNER_AD_UNIT_ID || TestIds.BANNER;
 
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
