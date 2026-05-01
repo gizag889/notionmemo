@@ -85,7 +85,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "react-native-google-mobile-ads",
       {
-        androidAppId: "ca-app-pub-8138082752217427~3440482983",
+        androidAppId: "ca-app-pub-8138082752217427~1380831209",
       },
     ],
     "expo-router",
